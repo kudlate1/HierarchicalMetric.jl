@@ -10,9 +10,9 @@ Utilization of hierarchical metrics for learning on data with a tree structure.
 - in the long run, we would like to learn that one of the dimensions is redundant
 - as a first step, we will learn the metric using triplet loss which should be good enough [1]
 
-TODO:
- [ ] write a basic description of the toy problem and corresponding code genertaing data
- [ ] adapt code from https://anonymous.4open.science/r/HTDExperiments/scripts/ContrastiveLearning.jl to run triplet loss on the toy data
+TODO (add 'x' inside the brackets when done):
+- [ ] write a basic description of the toy problem and corresponding code genertaing data
+- [ ] adapt code from https://anonymous.4open.science/r/HTDExperiments/scripts/ContrastiveLearning.jl to run triplet loss on the toy data
 
 
 
