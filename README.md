@@ -1,2 +1,2 @@
-# hierarchical__metric_proj
+# hierarchical-metric-proj
 Utilization of hierarchical metrics for learning on data with a tree structure.
