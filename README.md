@@ -11,8 +11,8 @@ Utilization of hierarchical metrics for learning on data with a tree structure.
 - as a first step, we will learn the metric using triplet loss which should be good enough [1]
 
 TODO (add 'x' inside the brackets when done):
-- [ ] write a basic description of the toy problem and corresponding code genertaing data
-- [ ] adapt code from https://anonymous.4open.science/r/HTDExperiments/scripts/ContrastiveLearning.jl to run triplet loss on the toy data
+- [x] write a basic description of the toy problem and corresponding code genertaing data
+- [x] adapt code from https://anonymous.4open.science/r/HTDExperiments/scripts/ContrastiveLearning.jl to run triplet loss on the toy data
 
 
 
