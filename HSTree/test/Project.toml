@@ -1,0 +1,15 @@
+name = "test"
+uuid = "81207902-0d5a-4535-8a60-a4263d250fa4"
+authors = ["TheMrGhostman <34610021+TheMrGhostman@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+HSTreeDistance = "a583b53f-943a-43fc-9688-8da2e63bdac3"
+Mill = "1d0525e4-8992-11e8-313c-e310e1f6ddea"
+OptimalTransport = "7e02d93a-ae51-4f58-b602-d97af76e3b33"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
