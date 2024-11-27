@@ -1,5 +1,6 @@
 using Random, Distances, Flux
 using Plots
+using Mill
 
 abstract type SelectingTripletMethod end
 
@@ -14,24 +15,35 @@ y - labels (length n)
 epochs - number of learning cycles
 
 """
-X = [[1.0, 2.0], [3.0, 2.0], [5.0, 2.0], [7.0, 2.0], [9.0, 2.0], 
-     [2.0, 3.0], [4.0, 3.0], [6.0, 3.0], [8.0, 3.0], [10.0, 3.0]]
-y = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+
+include("../../HSTree/src/metric.jl")
+
+X = Float64.([1 3 5 7 9 2 4 6 8 10; 2 2 2 2 2 3 3 3 3 3])
+y = [1 1 1 1 1 0 0 0 0 0]
+
+PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
+product_nodes = [PN[i] for i in 1:10]
+
+#pn = product_nodes[1]
+#pn.data.x.data |> only
+
 α = 0.1
-λ = 0.9
+λ = 0.01
 epochs = 200
 
 function plotData(points, labels)
 
-    x_coords = [point[1] for point in points]
-    y_coords = [point[2] for point in points]
+    x_coords = vec([only(point.data.x.data) for point in points])
+    y_coords = vec([only(point.data.y.data) for point in points])
 
-    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in labels]
+    println(x_coords)
+    println(y_coords)
+
+    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
 
     scatter(
         x_coords,
         y_coords,
-        group = labels,
         color = colors,
         marker = (10, :circle),
         xlabel = "x",
@@ -41,23 +53,31 @@ function plotData(points, labels)
     )
 end
 
-function separateClasses(X, y, anchor, anchor_label)
-    positives = [X[j] for j in 1:length(X) if y[j] == anchor_label && X[j] != anchor]
-    negatives = [X[j] for j in 1:length(X) if y[j] != anchor_label]
+function separateClasses(product_nodes, y, anchor, anchor_label)
+    positives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] == anchor_label && product_nodes[j] != anchor]
+    negatives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] != anchor_label]
     return positives, negatives
 end
 
-function mahalanobis(x, y, w)
-    return sum(w[i] * ((x[i] - y[i])^2) for i in 1:length(x))
+separateClasses(product_nodes, y, product_nodes[5], 1)
+
+function mahalanobis(pn1, pn2, w)
+ 
+    x1 = only(pn1.data.x.data)
+    y1 = only(pn1.data.y.data)
+    x2 = only(pn2.data.x.data)
+    y2 = only(pn2.data.y.data)
+    
+    return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
 end
 
-function selectTriplet(::SelectRandom, X, y, w)
+function selectTriplet(::SelectRandom, product_nodes, y, w)
     
-    i = rand(1:length(X))
-    anchor = X[i]
+    i = rand(1:length(product_nodes))
+    anchor = product_nodes[i]
     anchor_label = y[i]
 
-    positives, negatives = separateClasses(X, y, anchor, anchor_label)
+    positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
 
     positive = rand(positives)
     negative = rand(negatives)
@@ -65,15 +85,15 @@ function selectTriplet(::SelectRandom, X, y, w)
     return anchor, positive, negative
 end
 
-function selectTriplet(::SelectHard, X, y, w)
+function selectTriplet(::SelectHard, product_nodes, y, w)
 
     triplets = []
 
-    for i in 1:length(X)
+    for i in 1:length(product_nodes)
 
-        anchor = X[i]
+        anchor = product_nodes[i]
         anchor_label = y[i]
-        positives, negatives = separateClasses(X, y, anchor, anchor_label)
+        positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
 
         for pos in positives
             d_pos = mahalanobis(anchor, pos, w)
@@ -98,6 +118,8 @@ function triplet_loss(anchor, positive, negative, w)
     return max(d_pos - d_neg + α, 0)
 end
 
+triplet_loss(product_nodes[1], product_nodes[3], product_nodes[2], [1.0, 1.0])
+
 function train(method::SelectingTripletMethod)
 
     w = [1.0, 1.0]
@@ -106,33 +128,36 @@ function train(method::SelectingTripletMethod)
 
     for epoch in 1:epochs
 
-        triplet = selectTriplet(method, X, y, w)
+        triplet = selectTriplet(method, product_nodes, y, w)
         (triplet == nothing) && break 
 
         anchor, pos, neg = triplet
         (pos == nothing || neg == nothing) && continue
 
+        println(w)
+
         loss, grad = Flux.withgradient(() -> triplet_loss(anchor, pos, neg, w), ps)
         Flux.update!(opt, ps, grad)
 
-        println("Epoch $epoch, loss $loss, triplet [$anchor, $pos, $neg], [w1,w2] = $w")
+        println("Epoch $epoch, loss $loss, [w1,w2] = $w")
     end
 
     return w
 end
 
-# original dataset
-plotData(X, y)
+#-----------------------------------------------------------------------------------------------------------
 
-w = train(SelectHard())
+# original dataset
+plotData(product_nodes, y)
+
+w = train(SelectRandom())
 X_modified = deepcopy(X)
 
-for i in 1:length(X)
-    for j in 1:2
-        X_modified[i][j] = X[i][j] * w[j]
+for i in X
+    for j in 1:length(X)
+        i[j] = i[j] * w[j]
     end
 end
 
 # dataset after applying trained parameters w1, w2
 plotData(X_modified, y)
-
