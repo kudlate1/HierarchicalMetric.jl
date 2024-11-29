@@ -1,6 +1,7 @@
 using Random, Distances, Flux
 using Plots
 using Mill
+using HSTreeDistance
 
 abstract type SelectingTripletMethod end
 
@@ -16,13 +17,18 @@ epochs - number of learning cycles
 
 """
 
-include("../../HSTree/src/metric.jl")
+# include("../../HSTree/src/metric.jl")
 
 X = Float64.([1 3 5 7 9 2 4 6 8 10; 2 2 2 2 2 3 3 3 3 3])
 y = [1 1 1 1 1 0 0 0 0 0]
 
 PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
 product_nodes = [PN[i] for i in 1:10]
+
+lx = LeafMetric(Pairwise_SqEuclidean, "con", "x")
+ly = LeafMetric(Pairwise_SqEuclidean, "con", "y")
+PM = ProductMetric((x = lx, y = ly), SqWeightedProductMetric, WeightStruct((x = 1f0, y = 1f0), softplus), "name")
+PM2 = reflectmetric(product_nodes[1])
 
 #pn = product_nodes[1]
 #pn.data.x.data |> only
@@ -60,6 +66,10 @@ function separateClasses(product_nodes, y, anchor, anchor_label)
 end
 
 separateClasses(product_nodes, y, product_nodes[5], 1)
+
+function distance(pn1,pn2)
+
+end
 
 function mahalanobis(pn1, pn2, w)
  
