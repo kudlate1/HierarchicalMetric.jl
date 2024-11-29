@@ -4,6 +4,15 @@ Utilization of hierarchical metrics for learning on data with a tree structure.
 
 # TODO
 
+## Project description for Julia
+
+The objective is to train a sparse metric for HSTree on different datasets:
+- on a single dataset train classifier with metric using Tripplet loss
+- check sensitivity of the classification quality (precision, F1) as a function of the number of parameter (via L1/LASSO approach)
+- check sensitivity of the learned metric on a subset of the data (semisupervised)
+- Cross-check L! and semi-supervised approach
+
+
 ## Notes for 18 October
 - we will start with a toy problem in metric learning, e.g., two-class problems where data from each class form a line in 2d space.
 - the task is to learn the right metric, i.e. push the lines sufficiently far from each other
