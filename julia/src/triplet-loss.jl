@@ -27,7 +27,7 @@ distance(pn1, pn2, metric) = only(metric(pn1, pn2))
 # x = reflectmetric(product_nodes[1])
 # only(x(product_nodes[1], product_nodes[2]))
 
-function selectTriplet(::SelectRandom, product_nodes, y)
+function selectTriplet(::SelectRandom, product_nodes, y, metric; α = 0.1)
     
     i = rand(1:length(product_nodes))
     anchor = product_nodes[i]
@@ -41,7 +41,7 @@ function selectTriplet(::SelectRandom, product_nodes, y)
     return anchor, positive, negative
 end
 
-function selectTriplet(::SelectHard, product_nodes, y, metric, α)
+function selectTriplet(::SelectHard, product_nodes, y, metric; α = 0.1)
 
     triplets = []
 
@@ -64,12 +64,14 @@ function selectTriplet(::SelectHard, product_nodes, y, metric, α)
         end
     end
 
-    ret = (length(triplets) == 0) ? nothing : triplets[rand(1:length(triplets))]
-    return ret
+    return (length(triplets) == 0) ? nothing : triplets[rand(1:length(triplets))]
 end
 
-function triplet_loss(anchor, positive, negative, α, metric)
+function triplet_loss(anchor, positive, negative, metric; α = 0.1, λ = 1.0)
+
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
-    return max(d_pos - d_neg + α, 0)
+    w = metric.weights.values
+
+    return max(d_pos - d_neg + α, 0) + λ * sum(abs.(w))
 end

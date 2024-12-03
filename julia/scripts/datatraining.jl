@@ -20,6 +20,7 @@ product_nodes = [PN[i] for i in 1:10]
 # PM = ProductMetric((x = lx, y = ly), SqWeightedProductMetric, WeightStruct((x = 1f0, y = 1f0), softplus), "name")
 #
 # PM2 = reflectmetric(product_nodes[1])
+# only(PM2(product_nodes[1], product_nodes[2])) |> typeof
 
 function plotData(points, labels)
 
@@ -48,7 +49,7 @@ function train(method::SelectingTripletMethod, product_nodes; λ = 0.01, epochs 
     metric = reflectmetric(product_nodes[1])
     w = metric.weights.values
     ps = Flux.params(w)
-    opt = Descent(λ)
+    opt = Adam(λ)
 
     for epoch in 1:epochs
 
@@ -71,15 +72,4 @@ end
 
 # original dataset
 plotData(product_nodes, y)
-
 w = train(SelectHard(), product_nodes)
-X_modified = deepcopy(X)
-
-for i in X
-    for j in 1:length(X)
-        i[j] = i[j] * w[j]
-    end
-end
-
-# dataset after applying trained parameters w1, w2
-plotData(X_modified, y)
