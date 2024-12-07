@@ -117,3 +117,15 @@ function preprocess(X, y; ratios=(0.6,0.2,0.2), procedure=:clf, seed=666, filter
     end
     return (X_tr, y_tr), (X_val, y_val), (X_tst, y_tst)
 end
+
+function load(fileName)
+
+    data_string = read(fileName, String); 
+    data = JSON3.read(data_string); 
+    X = data.x; 
+    y = data.y; 
+    sch = JsonGrinder.schema(X); 
+    extractor = JsonGrinder.suggestextractor(sch); 
+    
+    return extractor.(X), y
+end

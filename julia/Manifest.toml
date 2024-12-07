@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.5"
+julia_version = "1.10.6"
 manifest_format = "2.0"
-project_hash = "f71211ffc5f265de28655bc3af2386ea6071561a"
+project_hash = "948570f0cdaeb6950bf586a99d1e03d9b279e67f"
 
 [[deps.AMD]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays", "Test"]

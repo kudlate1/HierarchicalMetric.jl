@@ -4,6 +4,7 @@ using Mill
 using HSTreeDistance
 
 include("../src/triplet-loss.jl")
+include("../src/dataloading.jl")
 
 
 X = Float64.([1 3 5 7 9 2 4 6 8 10; 2 2 2 2 2 3 3 3 3 3])
@@ -44,14 +45,13 @@ function plotData(points, labels)
     )
 end
 
-function train(method::SelectingTripletMethod, product_nodes; λ = 0.01, epochs = 200)
+function train(method::SelectingTripletMethod, product_nodes; λ = 0.01, max_iter = 200)
 
-    metric = reflectmetric(product_nodes[1])
-    w = metric.weights.values
-    ps = Flux.params(w)
-    opt = Adam(λ)
+    metric = reflectmetric(product_nodes[1], weight_transform=softplus)
+    ps = Flux.params(metric)
+    opt = Descent(λ)
 
-    for epoch in 1:epochs
+    for iter in 1:max_iter
 
         triplet = selectTriplet(method, product_nodes, y, metric)
         (triplet == nothing) && break 
@@ -59,10 +59,10 @@ function train(method::SelectingTripletMethod, product_nodes; λ = 0.01, epochs 
         anchor, pos, neg = triplet
         (pos == nothing || neg == nothing) && continue
 
-        loss, grad = Flux.withgradient(() -> triplet_loss(anchor, pos, neg, metric), ps)
+        loss, grad = Flux.withgradient(() -> tripletLoss(anchor, pos, neg, metric), ps)
         Flux.update!(opt, ps, grad)
 
-        println("Epoch $epoch, loss $loss, [w1,w2] = $w")
+        println("Epoch $iter, loss $loss, [w1,w2] = $ps")
     end
 
     return w
@@ -70,6 +70,15 @@ end
 
 #-----------------------------------------------------------------------------------------------------------
 
+using JsonGrinder
+using JSON3
+
+X, y = load("julia/data/mutagenesis.json")
+
+metric = reflectmetric(X[1])
+metric(X[1], X[2])
+Flux.params(metric)
+
 # original dataset
 plotData(product_nodes, y)
-w = train(SelectHard(), product_nodes)
+w = train(SelectHard(), product_nodes)  

@@ -23,10 +23,6 @@ distance(pn1, pn2, metric) = only(metric(pn1, pn2))
 #     return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
 # end
 
-# sqrt(mahalanobis(product_nodes[1], product_nodes[2], [1, 1]))
-# x = reflectmetric(product_nodes[1])
-# only(x(product_nodes[1], product_nodes[2]))
-
 function selectTriplet(::SelectRandom, product_nodes, y, metric; α = 0.1)
     
     i = rand(1:length(product_nodes))
@@ -67,11 +63,36 @@ function selectTriplet(::SelectHard, product_nodes, y, metric; α = 0.1)
     return (length(triplets) == 0) ? nothing : triplets[rand(1:length(triplets))]
 end
 
-function triplet_loss(anchor, positive, negative, metric; α = 0.1, λ = 1.0)
+function splitData(X, y, numFolds)
+
+    perm = Random.randperm(length(y))
+    trn_len = Int64((1 - 1/numFolds) * length(y))
+
+    X_perm = [X[:, i] for i in perm]
+    y_perm = [y[i] for i in perm]
+
+    X_trn = reduce(hcat, X_perm[1:trn_len, :])
+    y_trn = y_perm[1:trn_len, :]
+
+    X_tst = reduce(hcat, X_perm[trn_len + 1:end, :])
+    y_tst = y_perm[trn_len + 1:end, :]
+
+    return X_trn, y_trn, X_tst, y_tst
+end
+
+# TODO: which params to crossval
+function crossval(X, y, params, numFolds) 
+
+    X_train, y_train, X_test, y_test = splitData(X, y, 5)
+    best_λ = Nothing
+    bestScore = -Inf64
+end
+
+function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛₛₒ = 10.0)
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
     w = metric.weights.values
 
-    return max(d_pos - d_neg + α, 0) + λ * sum(abs.(w))
+    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * sum(abs.(w))
 end
