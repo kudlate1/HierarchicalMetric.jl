@@ -12,6 +12,13 @@ The objective is to train a sparse metric for HSTree on different datasets:
 - check sensitivity of the learned metric on a subset of the data (semisupervised)
 - Cross-check L! and semi-supervised approach
 
+## Notes for December 12
+We aim to speed up triplet selection
+- we will have one triplet for each training point
+- the first step is to compute the matrix of pair-wise distances for all inputs (expensive)
+- the choice of the triplet is then done by searching in the matrix
+
+Further speedups can be achieved by batching. That is subsampling the data set and running the above procedure for the subsampled data.
 
 ## Notes for 18 October
 - we will start with a toy problem in metric learning, e.g., two-class problems where data from each class form a line in 2d space.
