@@ -29,6 +29,7 @@ include("../src/dataloading.jl")
 
 X, y = load("julia/data/mutagenesis.json")
 distances = pairwiseDistance(X)
+heatmap(distances, aspect_ratio = 1)
 
 function train(method::SelectingTripletMethod; λ = 0.01, max_iter = 200)
 
