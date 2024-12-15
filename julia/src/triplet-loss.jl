@@ -13,17 +13,17 @@ end
 
 distance(pn1, pn2, metric) = only(metric(pn1, pn2))
 
-# function mahalanobis(pn1, pn2, w)
+function myMahalanobis(pn1, pn2, w)
  
-#     x1 = only(pn1.data.x.data)
-#     y1 = only(pn1.data.y.data)
-#     x2 = only(pn2.data.x.data)
-#     y2 = only(pn2.data.y.data)
+    x1 = only(pn1.data.x.data)
+    y1 = only(pn1.data.y.data)
+    x2 = only(pn2.data.x.data)
+    y2 = only(pn2.data.y.data)
     
-#     return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
-# end
+    return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
+end
 
-function selectTriplet(::SelectRandom, product_nodes, y, metric; α = 0.1)
+function selectTriplet(::SelectRandom, dists, product_nodes, y, metric)
     
     i = rand(1:length(product_nodes))
     anchor = product_nodes[i]
@@ -37,30 +37,61 @@ function selectTriplet(::SelectRandom, product_nodes, y, metric; α = 0.1)
     return anchor, positive, negative
 end
 
-function selectTriplet(::SelectHard, product_nodes, y, metric; α = 0.1)
+function pairwiseDistance(X)
 
+    n = length(X)
+    distances = zeros((n, n))
+    metric = reflectmetric(X[1], weight_transform=softplus)
+
+    for i in 1:n
+        for j in 1:n
+            (i != j) && (distances[i, j] = distance(X[i], X[j], metric))
+        end
+    end
+       
+    return distances
+end
+
+"""
+For random k product nodes finds a triplet (the nearest neg and the farthest pos from the dataset)
+"""
+function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
+
+    n = length(product_nodes)
+    k = 20
+    perm = Random.randperm(k)
     triplets = []
 
-    for i in 1:length(product_nodes)
+    for i in perm
 
         anchor = product_nodes[i]
         anchor_label = y[i]
         positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
 
-        for pos in positives
-            d_pos = distance(anchor, pos, metric)
+        positive = Nothing
+        negative = Nothing
 
-            for neg in negatives
-                d_neg = distance(anchor, neg, metric)
+        d_pos = 0.0
+        d_neg = Inf64
 
-                if d_neg < d_pos + α
-                    push!(triplets, (anchor, pos, neg))
-                end
+        for pos in 1:n
+            if (product_nodes[pos] in positives && dists[i, pos] > d_pos)
+                d_pos = dists[i, pos]
+                positive = product_nodes[pos]
             end
         end
+
+        for neg in 1:n
+            if (product_nodes[neg] in negatives && dists[i, neg] < d_neg)
+                d_neg = dists[i, neg]
+                negative = product_nodes[neg]
+            end
+        end
+
+        push!(triplets, (anchor, positive, negative))
     end
 
-    return (length(triplets) == 0) ? nothing : triplets[rand(1:length(triplets))]
+    return triplets[rand(1:length(triplets))]
 end
 
 function splitData(X, y, numFolds)
@@ -88,11 +119,11 @@ function crossval(X, y, params, numFolds)
     bestScore = -Inf64
 end
 
-function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛₛₒ = 10.0)
+function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛₛₒ = 100.0)
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
-    w = metric.weights.values
+    w = metric.weights.values # Flux.destructure, nebo jinak?
 
-    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * sum(abs.(w))
+    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * sum(abs.(w)) # lasso nic nedělá
 end

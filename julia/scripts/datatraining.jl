@@ -11,7 +11,7 @@ include("../src/triplet-loss.jl")
 include("../src/dataloading.jl")
 
 
-# X = Float64.([1 3 5 7 9 2 4 6 8 10; 2 2 2 2 2 3 3 3 3 3])
+# X = Float64.([1 3 5 7 9 2 4 6 8 10; 2 4 5 2 5 3 3 5 1 9])
 # y = [1 1 1 1 1 0 0 0 0 0]
 
 # PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
@@ -27,38 +27,18 @@ include("../src/dataloading.jl")
 # PM2 = reflectmetric(product_nodes[1])
 # only(PM2(product_nodes[1], product_nodes[2])) |> typeof
 
-function plotData(points, labels)
-
-    x_coords = vec([only(point.data.x.data) for point in points])
-    y_coords = vec([only(point.data.y.data) for point in points])
-
-    println(x_coords)
-    println(y_coords)
-
-    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
-
-    scatter(
-        x_coords,
-        y_coords,
-        color = colors,
-        marker = (10, :circle),
-        xlabel = "x",
-        ylabel = "y",
-        background_color = RGB(0.2, 0.2, 0.2),
-        legend = false
-    )
-end
+X, y = load("julia/data/mutagenesis.json")
+distances = pairwiseDistance(X)
 
 function train(method::SelectingTripletMethod; λ = 0.01, max_iter = 200)
 
-    X, y = load("julia/data/mutagenesis.json")
     metric = reflectmetric(X[1], weight_transform=softplus)
     ps = Flux.params(metric)
     opt = Descent(λ)
 
     for iter in 1:max_iter
 
-        triplet = selectTriplet(method, X, y, metric)
+        triplet = selectTriplet(method, distances, X, y, metric)
         (triplet === nothing) && break 
 
         anchor, pos, neg = triplet
@@ -70,17 +50,8 @@ function train(method::SelectingTripletMethod; λ = 0.01, max_iter = 200)
         println("Iteration $iter, loss $loss, params = $ps")
     end
 
-    return w
+    return ps
 end
 
 #-----------------------------------------------------------------------------------------------------------
-
-# X, y = load("julia/data/mutagenesis.json")
-
-# metric = reflectmetric(X[1])
-# metric(X[1], X[2])
-# Flux.params(metric)
-
-# original dataset
-plotData(product_nodes, y)
-w = train(SelectHard())
+ps = train(SelectHard())
