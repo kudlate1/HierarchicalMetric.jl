@@ -92,7 +92,14 @@ function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛ�
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
-    w = metric.weights.values
+    
+    w = Flux.params(metric) 
+    # mutagenesis weigts .... 
+    # w = Params([Float32[1.0, 1.0, 1.0, 1.0], Float32[1.0, 1.0, 1.0, 1.0], Float32[1.0, 1.0, 1.0, 1.0, 1.0]])   
+    # w = [x₁, x₂, x₃] = [[x₁₁, x₁₂, x₁₃, x₁₄], ..., [x₃₁, x₃₂, x₃₃, x₃₄, x₃₅]]
+    # L2 regularization 
+    # reg = √(∑ᵢ(∑ⱼ xᵢⱼ²)) ---->   √(x₁₁² + x₁₂² + ... +  x₃₄² + x₃₅²)
+    reg = sqrt(sum(x->sum(abs2.(x)), w)) 
 
-    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * sum(abs.(w))
+    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end

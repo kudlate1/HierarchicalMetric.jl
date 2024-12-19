@@ -52,7 +52,12 @@ end
 function train(method::SelectingTripletMethod; λ = 0.01, max_iter = 200)
 
     X, y = load("julia/data/mutagenesis.json")
-    metric = reflectmetric(X[1], weight_transform=softplus)
+    metric = reflectmetric(X[1], weight_sampler=randn, weight_transform=softplus) 
+    # For initialization of weights as 1, use weight_sampler=ones 
+    # or more precisely weight_sampler=x -> 0.54 * ones(x)
+    # softplus(x) = log(exp(x)+1) ---> 1 = softplus(x) = log(exp(x)+1) ---> x = log(exp(1) - 1) = 0.541324...
+    # Random initialization of weights from 𝒩(0,1) is as follows ....  weight_sampler=randn 
+    # weights when used in metric are transformed by weight_transform .... softplus(w), where w ∼ 𝒩(0,1)
     ps = Flux.params(metric)
     opt = Descent(λ)
 
@@ -82,5 +87,18 @@ end
 # Flux.params(metric)
 
 # original dataset
-plotData(product_nodes, y)
-w = train(SelectHard())
+#plotData(product_nodes, y)
+#w = train(SelectHard())
+
+
+
+# test if there any gradients from lasso objective
+function test_lasso(method::SelectingTripletMethod; λ = 0.01, max_iter = 200)
+    X, y = load("julia/data/mutagenesis.json")
+    metric = reflectmetric(X[1], weight_transform=softplus)
+    ps = Flux.params(metric)
+    
+    
+
+
+end
