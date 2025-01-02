@@ -58,7 +58,7 @@ For random k product nodes finds a triplet (the nearest neg and the farthest pos
 function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
 
     n = length(product_nodes)
-    k = 20
+    k = 10
     perm = Random.randperm(k)
     triplets = []
 
@@ -119,7 +119,7 @@ function crossval(X, y, params, numFolds)
     bestScore = -Inf64
 end
 
-function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛₛₒ = 10.0, weight_transform=softplus)
+function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 10.0, weight_transform=softplus)
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
@@ -132,7 +132,7 @@ function tripletLoss(anchor, positive, negative, metric; α = 0.1, λₗₐₛ�
     # L2 regularization 
     # reg = √(∑ᵢ(∑ⱼ xᵢⱼ²)) ---->   √(x₁₁² + x₁₂² + ... +  x₃₄² + x₃₅²)
     # f(x) is weight transform of each element of weights
-    reg = sqrt(sum(x->sum(abs2.(f(x))), w)) 
+    reg = sqrt(sum(x->sum(abs2.(f(x))), w))
 
     return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end
