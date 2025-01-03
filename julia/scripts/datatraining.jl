@@ -1,6 +1,5 @@
 using Random, Distances, Flux
 using Plots
-using Test
 
 using Mill
 using HSTreeDistance
@@ -34,7 +33,6 @@ heatmap(distances, aspect_ratio = 1)
 
 function train(method::SelectingTripletMethod; λ=0.1, max_iter=200)
 
-    #X, y = load("julia/data/mutagenesis.json")
     metric = reflectmetric(X[1], weight_sampler=randn, weight_transform=softplus) 
     # For initialization of weights as 1, use weight_sampler=ones 
     # or more precisely weight_sampler=x -> 0.54 * ones(x)
@@ -51,7 +49,7 @@ function train(method::SelectingTripletMethod; λ=0.1, max_iter=200)
         loss, grad = Flux.withgradient(() -> tripletLoss(anchor, pos, neg, metric), ps)
         Flux.update!(opt, ps, grad)
 
-        #println("Iteration $iter, loss $loss, params = $ps")
+        println("Iteration $iter, loss $loss, params = $ps")
     end
 
     return ps

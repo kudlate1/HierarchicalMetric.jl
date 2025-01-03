@@ -1,17 +1,33 @@
-
 abstract type SelectingTripletMethod end
 
 struct SelectRandom <: SelectingTripletMethod end
 struct SelectHard <: SelectingTripletMethod end
 
 
-function separateClasses(product_nodes, y, anchor, anchor_label)
+function splitClasses(product_nodes, y, anchor, anchor_label)
     positives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] == anchor_label && product_nodes[j] != anchor]
     negatives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] != anchor_label]
     return positives, negatives
 end
 
 distance(pn1, pn2, metric) = only(metric(pn1, pn2))
+
+function pairwiseDistance(X; wt=identity)
+
+    n = length(X)
+    (n == 0) && return zeros(Float64, 1, 1)
+
+    distances = zeros((n, n))
+    metric = reflectmetric(X[1], weight_transform=wt)
+
+    for i in 1:n
+        for j in 1:n
+            (i != j) && (distances[i, j] = distance(X[i], X[j], metric))
+        end
+    end
+       
+    return distances
+end
 
 function myMahalanobis(pn1, pn2, w)
  
@@ -29,27 +45,12 @@ function selectTriplet(::SelectRandom, dists, product_nodes, y, metric)
     anchor = product_nodes[i]
     anchor_label = y[i]
 
-    positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+    positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
     positive = rand(positives)
     negative = rand(negatives)
 
     return anchor, positive, negative
-end
-
-function pairwiseDistance(X)
-
-    n = length(X)
-    distances = zeros((n, n))
-    metric = reflectmetric(X[1], weight_transform=softplus)
-
-    for i in 1:n
-        for j in 1:n
-            (i != j) && (distances[i, j] = distance(X[i], X[j], metric))
-        end
-    end
-       
-    return distances
 end
 
 """
@@ -66,7 +67,7 @@ function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
 
         anchor = product_nodes[i]
         anchor_label = y[i]
-        positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+        positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
         positive = Nothing
         negative = Nothing
