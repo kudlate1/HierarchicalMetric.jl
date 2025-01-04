@@ -41,16 +41,20 @@ end
 
 function selectTriplet(::SelectRandom, dists, product_nodes, y, metric)
     
-    i = rand(1:length(product_nodes))
-    anchor = product_nodes[i]
-    anchor_label = y[i]
+    perm = Random.randperm(length(product_nodes))
 
-    positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
+    for i in perm
 
-    positive = rand(positives)
-    negative = rand(negatives)
-
-    return anchor, positive, negative
+        anchor = product_nodes[i]
+        anchor_label = y[i]
+        positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
+        
+        if (length(positives) != 0)
+            pos = rand(positives)
+            neg = (length(negatives) != 0) && rand(negatives)
+            return anchor, pos, neg
+        end
+    end
 end
 
 """
@@ -59,8 +63,7 @@ For random k product nodes finds a triplet (the nearest neg and the farthest pos
 function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
 
     n = length(product_nodes)
-    k = 10
-    perm = Random.randperm(k)
+    perm = Random.randperm(length(product_nodes))
     triplets = []
 
     for i in perm
@@ -69,8 +72,10 @@ function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
         anchor_label = y[i]
         positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
-        positive = Nothing
-        negative = Nothing
+        (length(positives) == 0) && continue
+
+        positive = false
+        negative = false
 
         d_pos = 0.0
         d_neg = Inf64
@@ -95,32 +100,7 @@ function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
     return triplets[rand(1:length(triplets))]
 end
 
-function splitData(X, y, numFolds)
-
-    perm = Random.randperm(length(y))
-    trn_len = Int64((1 - 1/numFolds) * length(y))
-
-    X_perm = [X[:, i] for i in perm]
-    y_perm = [y[i] for i in perm]
-
-    X_trn = reduce(hcat, X_perm[1:trn_len, :])
-    y_trn = y_perm[1:trn_len, :]
-
-    X_tst = reduce(hcat, X_perm[trn_len + 1:end, :])
-    y_tst = y_perm[trn_len + 1:end, :]
-
-    return X_trn, y_trn, X_tst, y_tst
-end
-
-# TODO: which params to crossval
-function crossval(X, y, params, numFolds) 
-
-    X_train, y_train, X_test, y_test = splitData(X, y, 5)
-    best_λ = Nothing
-    bestScore = -Inf64
-end
-
-function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 10.0, weight_transform=softplus)
+function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 10.0, weight_transform=identity)
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)

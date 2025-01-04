@@ -2,7 +2,7 @@ using Test
 
 function testClassSplit()
 
-    @testset "Testing splitClasses function" begin
+    @testset "Testing splitClasses function" verbose=true begin
         
         @testset "Testing basic functionality" begin
         

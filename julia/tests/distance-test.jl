@@ -8,7 +8,7 @@ function testDistance()
     product_nodes = [PN[i] for i in 1:10]
     PM = reflectmetric(product_nodes[1])
 
-    @testset "Testing correct distance computation" begin
+    @testset "Testing correct distance computation" verbose=true begin
         
         @testset "Testing basic case" begin
             @test distance(PN[3], PN[4], PM) == 1.0
@@ -27,7 +27,7 @@ function testDistance()
 
     end
 
-    @testset "Testing pairwise matrix" begin
+    @testset "Testing pairwise matrix" verbose=true begin
         
         @testset "Testing correct output type of pairwiseDistance function" begin
             matrix1 = pairwiseDistance(product_nodes)
@@ -56,4 +56,3 @@ function testDistance()
 end
 
 testDistance();
-

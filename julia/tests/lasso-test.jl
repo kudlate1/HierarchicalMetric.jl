@@ -1,7 +1,5 @@
 using Test
 
-#include("../src/triplet-loss.jl")
-
 # test if there any gradients from lasso objective
 function test_lasso(method::SelectingTripletMethod; λ = 0.01)
 

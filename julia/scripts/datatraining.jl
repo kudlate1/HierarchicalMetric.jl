@@ -46,7 +46,7 @@ function train(method::SelectingTripletMethod; λ=0.1, max_iter=200)
     for iter in 1:max_iter
 
         anchor, pos, neg = selectTriplet(method, distances, X, y, metric)
-        loss, grad = Flux.withgradient(() -> tripletLoss(anchor, pos, neg, metric), ps)
+        loss, grad = Flux.withgradient(() -> tripletLoss(anchor, pos, neg, metric; weight_transform=softplus), ps)
         Flux.update!(opt, ps, grad)
 
         println("Iteration $iter, loss $loss, params = $ps")
