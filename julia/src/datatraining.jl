@@ -1,14 +1,11 @@
 using Random, Distances, Flux
-# using Plots
 
 using Mill
 using HSTreeDistance
 
-# using JsonGrinder
-# using JSON3
-
 include("../src/triplet-loss.jl")
 include("../src/dataloading.jl")
+
 
 function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter=50)
 

@@ -1,0 +1,5 @@
+name = "HierarchicalMetric"
+uuid = "2709c987-fb22-420e-be5f-41d1bcb75dee"
+authors = ["Tereza Kudláčková <kudlate1@fel.cvut.cz>"]
+version = "1.0.0"
+license = "MIT"
