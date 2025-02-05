@@ -8,6 +8,7 @@ function test_lasso(method::SelectingTripletMethod; λ = 0.01)
     anchor, pos, neg = selectTriplet(method, distances, X[1:10], y[1:10], metric) # just on small batch
         
     @testset "Testing gradients of triplet loss with lasso" verbose=true begin
+        
         @testset "testing contribution of only lasso λₗₐₛₛₒ = 1.0" begin
             metric = reflectmetric(X[1], weight_sampler=ones, weight_transform=identity)
             ps = Flux.params(metric)

@@ -1,18 +1,48 @@
-abstract type SelectingTripletMethod end
+abstract type TripletSelectionMethod end
 
-struct SelectRandom <: SelectingTripletMethod end
-struct SelectHard <: SelectingTripletMethod end
+struct SelectRandom <: TripletSelectionMethod end
+struct SelectHard <: TripletSelectionMethod end
 
 
-function splitClasses(product_nodes, y, anchor, anchor_label)
-    positives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] == anchor_label && product_nodes[j] != anchor]
-    negatives = [product_nodes[j] for j in 1:length(product_nodes) if y[j] != anchor_label]
+function splitClasses(X, y, anchor, anchor_label)
+
+    """
+    Based on an anchor splits the classes into positive samples (nodes of 
+    the same class as the anchor) and negative samples (opposite class)
+
+    Params:
+    X (Vector{ProductNode}): data (ProductNodes)
+    y (Vector{Int64}): labels
+    anchor (ProductNode): an anchor
+    anchor_label: an anchor's label
+
+    Return:
+    (Vector{ProductNode}, Vector{ProductNode}): tuple of positives and negatives
+
+    """
+
+    positives = [X[j] for j in 1:length(X) if y[j] == anchor_label && X[j] != anchor]
+    negatives = [X[j] for j in 1:length(X) if y[j] != anchor_label]
     return positives, negatives
 end
 
-distance(pn1, pn2, metric) = only(metric(pn1, pn2))
+function distance(pn1, pn2, metric)
+    return only(metric(pn1, pn2))
+end
 
 function pairwiseDistance(X; wt=identity)
+
+    """
+    Computes pairwise distances between ProductNodes
+
+    Params:
+    X (Vector{ProductNode}): an array of ProductNodes (dataset)
+    wt (WeightStruct): weight transform (identity/softmax)
+
+    Return:
+    Matrix{Float64}: matrix with pairwise distances 
+
+    """
 
     n = length(X)
     (n == 0) && return zeros(Float64, 1, 1)
@@ -39,15 +69,29 @@ function myMahalanobis(pn1, pn2, w)
     return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
 end
 
-function selectTriplet(::SelectRandom, dists, product_nodes, y, metric)
+function selectTriplet(::SelectRandom, dists, X, y, metric)
+
+    """
+    Every training iteration selects the triplet randomly. 
+
+    Params:
+    dists (Matrix{Float64}): matrix with pairwise distances
+    X (Vector{ProductNode}): an array of ProductNodes (dataset)
+    y (Vector{int}): labels 
+    metric (reflectmetric)
+
+    Return:
+    (ProductNode, ProductNode, ProductNode): the triplet 
+
+    """
     
-    perm = Random.randperm(length(product_nodes))
+    perm = Random.randperm(length(X))
 
     for i in perm
 
-        anchor = product_nodes[i]
+        anchor = X[i]
         anchor_label = y[i]
-        positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
+        positives, negatives = splitClasses(X, y, anchor, anchor_label)
         
         if (length(positives) != 0)
             pos = rand(positives)
@@ -57,20 +101,35 @@ function selectTriplet(::SelectRandom, dists, product_nodes, y, metric)
     end
 end
 
-"""
-For random k product nodes finds a triplet (the nearest neg and the farthest pos from the dataset)
-"""
-function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
+function selectTriplet(::SelectHard, dists, X, y, metric)
 
-    n = length(product_nodes)
-    perm = Random.randperm(length(product_nodes))
+    """
+    For random k product nodes finds a triplet (the nearest neg 
+    and the farthest pos from the dataset)
+
+    Params:
+    dists (Matrix{Float64}): matrix with pairwise distances
+    X (Vector{ProductNode}): an array of ProductNodes (dataset)
+    y (Vector{int}): labels 
+    metric (reflectmetric)
+
+    Return:
+    (ProductNode, ProductNode, ProductNode): the triplet 
+
+    """
+
+    k = 10
+    n = length(X)
+    perm = Random.randperm(n)
     triplets = []
 
     for i in perm
 
-        anchor = product_nodes[i]
+        (k <= 0) && break 
+
+        anchor = X[i]
         anchor_label = y[i]
-        positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
+        positives, negatives = splitClasses(X, y, anchor, anchor_label)
 
         (length(positives) == 0) && continue
 
@@ -81,18 +140,20 @@ function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
         d_neg = Inf64
 
         for pos in 1:n
-            if (product_nodes[pos] in positives && dists[i, pos] > d_pos)
+            if (X[pos] in positives && dists[i, pos] > d_pos)
                 d_pos = dists[i, pos]
-                positive = product_nodes[pos]
+                positive = X[pos]
             end
         end
 
         for neg in 1:n
-            if (product_nodes[neg] in negatives && dists[i, neg] < d_neg)
+            if (X[neg] in negatives && dists[i, neg] < d_neg)
                 d_neg = dists[i, neg]
-                negative = product_nodes[neg]
+                negative = X[neg]
             end
         end
+
+        k = k-1
 
         push!(triplets, (anchor, positive, negative))
     end
@@ -100,7 +161,24 @@ function selectTriplet(::SelectHard, dists, product_nodes, y, metric)
     return triplets[rand(1:length(triplets))]
 end
 
-function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 10.0, weight_transform=identity)
+function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 0.01, weight_transform=identity)
+
+    """
+    Computes the triplet loss function with Lasso (L1) regularization
+
+    Params:
+    anchor (ProductNode): an anchor
+    positive (Vector{ProductNode}): positive samples
+    negative (Vector{ProductNode}): negative samples
+    metric (reflectmetric): metric used for distance calculation
+    α (Float64): a bias used in triplet loss function
+    λₗₐₛₛₒ (Float64): Lasso parameter
+    weight_transform (WeightStruct): weight transform (identity/softmax)
+
+    Return:
+    (Float64): the loss
+
+    """
 
     d_pos = distance(anchor, positive, metric)
     d_neg = distance(anchor, negative, metric)
@@ -110,10 +188,11 @@ function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛ�
     # mutagenesis weigts .... 
     # w = Params([Float32[1.0, 1.0, 1.0, 1.0], Float32[1.0, 1.0, 1.0, 1.0], Float32[1.0, 1.0, 1.0, 1.0, 1.0]])   
     # w = [x₁, x₂, x₃] = [[x₁₁, x₁₂, x₁₃, x₁₄], ..., [x₃₁, x₃₂, x₃₃, x₃₄, x₃₅]]
-    # L2 regularization 
+    # L1 regularization 
     # reg = √(∑ᵢ(∑ⱼ xᵢⱼ²)) ---->   √(x₁₁² + x₁₂² + ... +  x₃₄² + x₃₅²)
     # f(x) is weight transform of each element of weights
-    reg = sqrt(sum(x->sum(abs2.(f(x))), w))
+
+    reg = sum(x->sum(abs.(f(x))), w)
 
     return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end
