@@ -6,7 +6,7 @@ using JSON3
 include("../src/triplet-loss.jl")
 include("../src/dataloading.jl")
 
-function paramsImportance(trainNumber)
+function paramsImportance(n)
 
     """
     Trains the parameters trainNumber-times. After every finished training the function
@@ -19,7 +19,7 @@ function paramsImportance(trainNumber)
     """
 
     counts = zeros(Int64, 13)
-    for _ in 1:trainNumber
+    for _ in 1:n
         ps, h = train(SelectRandom());
         h = reduce(hcat, h)'
         flat = vcat(softplus.(ps)...)
@@ -39,9 +39,15 @@ heatmap(distances, aspect_ratio = 1)
 
 # training the parameters once and plot the result
 ps, h = train(SelectHard(), X, y, distances);
-h = reduce(hcat, h)'
-plot(h, xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")  #, label=["w1" "w2"], xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")
-vcat(softplus.(ps)...)
+
+# plot process of training
+function plotProcess(ps, h)
+
+    plot(reduce(hcat, h)', xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")  #, label=["w1" "w2"], xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")
+    vcat(softplus.(ps)...)
+end
+
+plotProcess(ps, h)
 
 # multiple trainings for more precise analysis of the importance of the each parameter
 paramsImportance(300)
