@@ -1,37 +1,20 @@
-# hierarchical-metric-proj
-Utilization of hierarchical metrics for learning on data with a tree structure.
+# 📦 HierarchicalMetric.jl
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://your-docs-link)
+[![CI](https://github.com/kudlate1/HierarchicalMetric.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/kudlate1/HierarchicalMetric.jl/actions)
 
-# TODO
+🚀 **HierarchicalMetric.jl** is a Julia package providing functions and scripts for the metric learning. 
 
-## Project description for Julia
+## 🔍 **Introduction**
 
-The objective is to train a sparse metric for HSTree on different datasets:
-- on a single dataset train classifier with metric using Tripplet loss
-- check sensitivity of the classification quality (precision, F1) as a function of the number of parameter (via L1/LASSO approach)
-- check sensitivity of the learned metric on a subset of the data (semisupervised)
-- Cross-check L! and semi-supervised approach
+The metric learning is based on the distance between data points in a dataset. It can be used for many approaches in machine learning such as classification, clustering, or information retrieval. The distances for vector spaces are well known and relatively easy to define (e. g. euclidean, manhattan) in contrast to structured data. In this article, we introduce the theoretical foundations of metric learning in vector spaces and also examine learning with the Hierarchically-structured Tree Distance (HTD).
 
-## Notes for December 12
-We aim to speed up triplet selection
-- we will have one triplet for each training point
-- the first step is to compute the matrix of pair-wise distances for all inputs (expensive)
-- the choice of the triplet is then done by searching in the matrix
+## 📚 **Approaches**
 
-Further speedups can be achieved by batching. That is subsampling the data set and running the above procedure for the subsampled data.
+We are given fully labeled datasets, where we want to learn a sparse metric to separate
+two different classes using the triplet loss method. The first dataset is artificial and trivial, its main purpose is to graphically explain the theoretical foundations of the experiment, the second dataset called mutagenesis is significantly larger and its data points have a tree structure and, accordingly, more parameters to learn. The metric in these datasets is called sparse, which means that not every parameter (or dimension) affects the computation of distances; therefore, some of the parameters can converges toward zero).
 
-## Notes for 18 October
-- we will start with a toy problem in metric learning, e.g., two-class problems where data from each class form a line in 2d space.
-- the task is to learn the right metric, i.e. push the lines sufficiently far from each other
-- in the long run, we would like to learn that one of the dimensions is redundant
-- as a first step, we will learn the metric using triplet loss which should be good enough [1]
+## 📌 **Task**
 
-TODO (add 'x' inside the brackets when done):
-- [x] write a basic description of the toy problem and corresponding code genertaing data
-- [x] adapt code from https://anonymous.4open.science/r/HTDExperiments/scripts/ContrastiveLearning.jl to run triplet loss on the toy data
-
-
-
-
-References:
-[1] Musgrave, K., Belongie, S. and Lim, S.N., 2020. A metric learning reality check. In Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part XXV 16 (pp. 681-699). Springer International Publishing.
+The task is to implement a training algorithm for learning a sparse metric. This process includes the iterative examination of the model parameters within a training loop. Parameter sparsity is achieved through the application of the Lasso regularization method.

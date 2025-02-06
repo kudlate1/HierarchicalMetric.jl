@@ -42,3 +42,6 @@ ps, h = train(SelectHard(), X, y, distances);
 h = reduce(hcat, h)'
 plot(h, xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")  #, label=["w1" "w2"], xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")
 vcat(softplus.(ps)...)
+
+# multiple trainings for more precise analysis of the importance of the each parameter
+paramsImportance(300)
