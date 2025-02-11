@@ -1,12 +1,3 @@
-using Random, Distances, Flux
-
-using Mill
-using HSTreeDistance
-
-include("../src/triplet-loss.jl")
-include("../src/dataloading.jl")
-
-
 function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter=50)
 
     """
@@ -30,17 +21,21 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
     # Random initialization of weights from 𝒩(0,1) is as follows ....  weight_sampler=randn 
     # weights when used in metric are transformed by weight_transform .... softplus(w), where w ∼ 𝒩(0,1)
 
-    metric |> typeof
     ps = Flux.params(metric)
     opt = Adam(λ)
     history = []
+
     for iter in 1:max_iter
 
         anchor, pos, neg = selectTriplet(method, distances, X, y, metric)
-        loss, grad = Flux.withgradient(() -> tripletLoss(anchor, pos, neg, metric; weight_transform=softplus), ps)
-        Flux.update!(opt, ps, grad)
-        push!(history, reduce(vcat, ps))
-        println("Iteration $iter, loss $loss, history = $(history[iter]), params = $ps)")
+        state_tree = Flux.setup(opt, metric)
+        loss, grad = Flux.withgradient(metric) do m
+            tripletLoss(anchor, pos, neg, m; weight_transform=softplus)
+        end
+        Flux.update!(state_tree, metric, grad[1])
+
+        push!(history, Flux.destructure(metric)[1])
+        println("Iteration $iter, loss $loss, history = $(history[iter]), params = $(Flux.destructure(metric)[1]))")
     end
 
     return ps, history

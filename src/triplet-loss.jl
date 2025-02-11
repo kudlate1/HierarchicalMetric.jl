@@ -1,9 +1,3 @@
-abstract type TripletSelectionMethod end
-
-struct SelectRandom <: TripletSelectionMethod end
-struct SelectHard <: TripletSelectionMethod end
-
-
 function splitClasses(X, y, anchor, anchor_label)
 
     """

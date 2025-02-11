@@ -11,7 +11,7 @@ function testClassSplit()
             anchor = "node1"
             anchor_label = "A"
 
-            positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+            positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
             expected_positives = ["node3", "node4"]
             expected_negatives = ["node2"]
@@ -27,7 +27,7 @@ function testClassSplit()
             anchor = "node1"
             anchor_label = "A"
 
-            positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+            positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
             expected_positives = []
             expected_negatives = []
@@ -42,7 +42,7 @@ function testClassSplit()
             y = ["A", "B", "A", "A"]
             anchor = "node2"
             anchor_label = "B"
-            positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+            positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
 
             expected_positives = []
             expected_negatives = ["node1", "node3", "node4"]
@@ -57,7 +57,7 @@ function testClassSplit()
             y = ["A", "A", "A", "A"]
             anchor = "node2"
             anchor_label = "A"
-            positives, negatives = separateClasses(product_nodes, y, anchor, anchor_label)
+            positives, negatives = splitClasses(product_nodes, y, anchor, anchor_label)
     
             expected_positives = ["node1", "node3", "node4"]
             expected_negatives = []
@@ -67,6 +67,3 @@ function testClassSplit()
         end
     end
 end
-
-testClassSplit();
-

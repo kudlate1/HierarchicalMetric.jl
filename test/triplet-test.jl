@@ -31,5 +31,3 @@ function testTripletSelection()
         end
     end
 end
-
-testTripletSelection();

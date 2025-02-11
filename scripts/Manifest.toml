@@ -2,7 +2,7 @@
 
 julia_version = "1.10.6"
 manifest_format = "2.0"
-project_hash = "479d0aef0299edce3fc57806258e514383d53690"
+project_hash = "8179966e67f89734fc9495fdaba9207c519d3473"
 
 [[deps.AMD]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays", "Test"]
@@ -671,7 +671,7 @@ version = "1.14.2+1"
 
 [[deps.HSTreeDistance]]
 deps = ["BenchmarkTools", "ChainRules", "ChainRulesCore", "Distances", "Flux", "HierarchicalUtils", "JsonGrinder", "LinearAlgebra", "MLUtils", "MathOptInterface", "Mill", "MutableArithmetics", "OneHotArrays", "OptimalTransport", "Random", "Revise", "Statistics", "StringDistances", "Tulip", "Zygote"]
-path = "HSTreeDistance.jl"
+path = "../HSTreeDistance.jl"
 uuid = "a583b53f-943a-43fc-9688-8da2e63bdac3"
 version = "0.2.2"
 
@@ -691,6 +691,12 @@ version = "8.5.0+0"
 git-tree-sha1 = "2eaa69a7cab70a52b9687c8bf950a5a93ec895ae"
 uuid = "076d061b-32b6-4027-95e0-9a2c6f6d7e74"
 version = "0.2.0"
+
+[[deps.HierarchicalMetric]]
+deps = ["Aqua", "Distances", "Flux", "HSTreeDistance", "JSON3", "JsonGrinder", "MLDatasets", "MLUtils", "Mill", "Pkg", "Plots", "Random", "StatsBase"]
+path = ".."
+uuid = "2e9332cc-72f8-45e1-b599-9fe1d124ce95"
+version = "0.0.0"
 
 [[deps.HierarchicalUtils]]
 deps = ["DataStructures", "OrderedCollections"]
