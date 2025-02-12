@@ -35,7 +35,7 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
         Flux.update!(state_tree, metric, grad[1])
 
         push!(history, Flux.destructure(metric)[1])
-        println("Iteration $iter, loss $loss, history = $(history[iter]), params = $(Flux.destructure(metric)[1]))")
+        println("Iteration $iter, loss $loss, params = $(softplus.(Flux.destructure(metric)[1]))")
     end
 
     return ps, history

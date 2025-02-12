@@ -1,7 +1,9 @@
 using HierarchicalMetric
+using HierarchicalMetric.Mill
+using Plots
 
 """
-Example of usage of functions 
+Example of usage of Mill.jl functions 
 
 Values in the ProductNode access:
 pn = product_nodes[1]
@@ -20,42 +22,62 @@ only(PM2(product_nodes[1], product_nodes[2]))
 
 """
 
-function trainTrivial()
+function plotData(data, labels)
 
-    function plotData(points, labels; w = [1.0, 1.0])
+    x_coords = vec([data[1] for point in data])
+    y_coords = vec([data[2] for point in data])
 
-        x_coords = vec(w[1] * [only(point.data.x.data) for point in points])
-        y_coords = vec(w[2] * [only(point.data.y.data) for point in points])
-    
-        colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
-    
-        scatter(
-            x_coords,
-            y_coords,
-            color = colors,
-            marker = (10, :circle),
-            xlabel = "x",
-            ylabel = "y",
-            background_color = RGB(0.2, 0.2, 0.2),
-            legend = false
-        )
-    end
+    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
 
-    # trivial artificial dataset and its labels 
-    data = Float64.([1 3 5 7 9 2 4 6 8 10; 2 2 2 2 2 3 3 3 3 3])
-    y = [1 1 1 1 1 0 0 0 0 0]
+    scatter(
+        x_coords,
+        y_coords,
+        color = colors,
+        marker = (10, :circle),
+        xlabel = "x",
+        ylabel = "y",
+        background_color = RGB(0.2, 0.2, 0.2),
+        legend = false
+    )
+end
 
-    # making the ProductNodes from basic matrix notation
+function createProductNodes(data)
+
     PN = ProductNode((x = Array(data[1, :]'), y  = Array(data[2, :]')))
     X = [PN[i] for i in 1:10]
-    distances = pairwiseDistance(X)
-
-    # ploting the original data as graph and heatmap
-    plotData(X, y)
-    heatmap(distances, aspect_ratio = 1)
-
-    # training the parameters and ploting the result
-    ps, h = train(SelectHard(), X, y, distances)
-    plotData(X, y; w = softplus.(ps)[1])
-
+    return X
 end
+
+function visualiseDistances(distances)
+    heatmap(distances, aspect_ratio = 1)
+end
+
+function plotProcess(ps, h)
+
+    p = plot(reduce(hcat, h)', 
+        xlabel="number of iteations", 
+        ylabel="values of the parameters", 
+        title="Parameters learning with lasso regularization"
+    )
+    display(p)
+
+    return vcat(softplus.(ps)[1])
+end
+
+
+"""
+EXAMPLE OF A TRAINING EXECUTION:
+
+data = Float64[1 3 5 7 9 2 4 6 8 10; 1 1 1 1 1 2 2 2 2 2]
+y = [1 1 1 1 1 0 0 0 0 0]
+
+X = createProductNodes(data)
+plotData(X, y)
+
+distances = pairwiseDistance(X)
+visualiseDistances(distances)
+
+ps, h = train(SelectRandom(), X, y, distances);
+plotProcess(ps, h)
+
+"""

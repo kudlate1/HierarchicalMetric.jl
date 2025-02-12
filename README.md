@@ -54,9 +54,20 @@ The HierarchicalMetric package provides a function for loading the dataset, whic
 # dataset X and labels y
 X, y = load("julia/data/mutagenesis.json")
 ```
+
+The trivial dataset can be made up by user (including labels!). For simplicity, the data points can be declared as 2xN Matrix{Float64}, (where N is number of points and 2 represents number of dimensions) and by using function #createProductNodes(data)# transfer them into wanted structure (ProductNode).
+
+```julia
+# dataset X and labels y
+data = Float64[1 3 5 7 9 2 4 6 8 10; 1 1 1 1 1 2 2 2 2 2]
+y = [1 1 1 1 1 0 0 0 0 0]
+
+X = createProductNodes(data)
+```
+
 ### 2. Pairwise distances ###
 
-The precomputation of pairwise distances significantly acceelerates the training process. 
+The precomputation of pairwise distances significantly accelerates the training process. 
 
 ```julia
 distances = pairwiseDistance(X)
@@ -76,10 +87,17 @@ ps, h = train(SelectHard(), X, y, distances; λ=0.2, max_iter=10);
 
 ### 4. Plots ###
 
+In case of trivial dataset, the data can be simply displayed as 2D graph by plotData() function.
+
+```julia
+# X - array of ProductNodes, y - labels 
+plotData(X, y)
+```
+
 The visualisation of the tree structured data might be challenging, but also beneficial for distinguish outlayers. The most straightforward way can be the heatmap representing the distances between nodes.
 
 ```julia
-heatmap(distances, aspect_ratio = 1)
+visualiseDistances(distances)
 ```
 
 With an analysis of the trained parameters can be helpful to plot the process of learning.
@@ -92,6 +110,7 @@ plotProcess(ps, h)
 Sometimes the results of each training can slightly differ. For this case function paramsImportance(n) runs the learning n-times. Each finished training is decided wheather is a parameter important for calculations (+1) or not. The outcome is displayed on the graph.
 
 ```julia
-# examine the parameters importance while n = 300 trainings
-paramsImportance(300)
+# examine the parameters importance while n is number of trainings
+# redundant for the trivial data, where the result is evident
+paramsImportance(100)
 ```

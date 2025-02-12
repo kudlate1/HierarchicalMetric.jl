@@ -1,5 +1,6 @@
 using HierarchicalMetric
-using Plots
+using HierarchicalMetric.Mill
+using HierarchicalMetric.Plots
 
 function paramsImportance(n)
 
@@ -12,12 +13,16 @@ function paramsImportance(n)
     trainNumber (Int64): the number of trainings
 
     """
+    X, y = load("data/mutagenesis.json")
+    distances = pairwiseDistance(X)
+    metric = reflectmetric(X[1], weight_sampler=randn, weight_transform=softplus) 
 
     counts = zeros(Int64, 13)
     for _ in 1:n
-        ps, h = train(SelectRandom());
+        ps, h = train(SelectHard(), X, y, distances; max_iter=25);
         h = reduce(hcat, h)'
-        flat = vcat(softplus.(ps)...)
+        flat = softplus.(Flux.destructure(metric)[1])
+        println(flat)
         for i in 1:length(flat)
             (flat[i] >= 0.1) && (counts[i] += 1)
         end
@@ -27,22 +32,27 @@ function paramsImportance(n)
     xticks!(1:length(counts))
 end
 
-function trainMutagenesis()
+function plotProcess(ps, h)
 
-    function plotProcess(ps, h)
+    p = plot(reduce(hcat, h)', 
+        xlabel="number of iteations", 
+        ylabel="values of the parameters", 
+        title="Parameters learning with lasso regularization"
+    )
+    display(p)
 
-        plot(reduce(hcat, h)', xlabel="number of iterations", ylabel="values of the parameters", title="Parameters learning with lasso regularization")
-        vcat(softplus.(ps)...)
-    end
-
-    # loading the dataset and its visualisation
-    X, y = load("data/mutagenesis.json")
-    distances = pairwiseDistance(X)
-    heatmap(distances, aspect_ratio = 1)
-
-    # training the parameters once and plot the result
-    ps, h = train(SelectRandom(), X, y, distances);
-
-    # plot process of training
-    plotProcess(ps, h)
+    return vcat(softplus.(ps)[1])
 end
+
+"""
+EXAMPLE OF A TRAINING EXECUTION:
+
+X, y = load("data/mutagenesis.json")
+distances = pairwiseDistance(X)
+
+heatmap(distances, aspect_ratio = 1)
+
+ps, h = train(SelectRandom(), X, y, distances);
+plotProcess(ps, h)
+
+"""

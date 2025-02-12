@@ -37,4 +37,14 @@ end
 
 export test
 
+include("../scripts/triv.jl")
+export plotData
+export createProductNodes
+export visualiseDistances
+export plotProcess
+
+include("../scripts/muta-train.jl")
+export plotProcess
+export paramsImportance
+
 end
