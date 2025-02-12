@@ -1,3 +1,4 @@
+using HierarchicalMetric
 using Plots
 
 function paramsImportance(n)

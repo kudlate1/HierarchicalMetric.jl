@@ -1,3 +1,5 @@
+using HierarchicalMetric
+
 """
 Example of usage of functions 
 
