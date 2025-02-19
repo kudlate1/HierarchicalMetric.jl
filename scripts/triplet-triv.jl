@@ -24,8 +24,8 @@ only(PM2(product_nodes[1], product_nodes[2]))
 
 function plotData(data, labels)
 
-    x_coords = vec([data[1] for point in data])
-    y_coords = vec([data[2] for point in data])
+    x_coords = vec([i[1] for i in eachcol(data)])
+    y_coords = vec([i[2] for i in eachcol(data)])
 
     colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
 
@@ -71,8 +71,8 @@ EXAMPLE OF A TRAINING EXECUTION:
 data = Float64[1 3 5 7 9 2 4 6 8 10; 1 1 1 1 1 2 2 2 2 2]
 y = [1 1 1 1 1 0 0 0 0 0]
 
+plotData(data, y)
 X = createProductNodes(data)
-plotData(X, y)
 
 distances = pairwiseDistance(X)
 visualiseDistances(distances)

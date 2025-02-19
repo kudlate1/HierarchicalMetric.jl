@@ -9,6 +9,7 @@ using JsonGrinder
 using JSON3
 using Plots
 using Colors
+using Statistics
 
 
 abstract type TripletSelectionMethod end
@@ -37,7 +38,7 @@ end
 
 export test
 
-include("../scripts/triv.jl")
+include("../scripts/triplet-triv.jl")
 export plotData
 export createProductNodes
 export visualiseDistances
@@ -46,5 +47,7 @@ export plotProcess
 include("../scripts/muta-train.jl")
 export plotProcess
 export paramsImportance
+
+include("../scripts/LAC-triv.jl")
 
 end
