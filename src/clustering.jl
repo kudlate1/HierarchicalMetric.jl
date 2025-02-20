@@ -1,9 +1,24 @@
 function setCentroids(X::Matrix, S::Dict, k::Int, d::Int)
 
+    """
+    Computes new centroids based on clustering S.
+
+    Params:
+    X (Matrix): points
+    S (Dict): current subsets containing vectors of each cluster
+    k (Int): number of clusters (centroids respectively)
+    d (Int): number of dimensions
+
+    Return:
+    (Matrix): new centroids
+    """
+
     centroids = zeros(d, k)
 
     for i in 1:k
-        centroids[:, i] = (sum(x .* indicator(x, S["S$i"]) for x in eachcol(X))) ./ sum(indicator(x, S["S$i"]) for x in eachcol(X))
+        numerator = (sum(x .* indicator(x, S["S$i"]) for x in eachcol(X)))
+        denominator = sum(indicator(x, S["S$i"]) for x in eachcol(X))
+        centroids[:, i] = numerator ./ denominator
     end
 
     return centroids
@@ -11,15 +26,43 @@ end
 
 function initSubsets(k::Int)
 
+    """
+    Initializes partition S and its 'k' subsets Sⱼ. S is represented as dictionary with keys Sⱼ in 
+    pair with an empty array S = Dict("S1" => [], ..., "Sk" => []).
+
+    Later the vectors are pushed into corresponding subsets Sⱼ ->  S = Dict("Sj" => Vector{Vector{}}).
+    After sorting all the 'n' points, the Vector{Vector{}} structure is transformed into Matrix in
+    order to maintain the consistency of used data types.
+
+    Params:
+    k (Int): number of clusters
+
+    Return:
+    (Dict): empty Initialized dictionary S = Dict("S1" => [], ..., "Sk" => [])
+    """
+
     S = Dict()
-    for i in 1:k
-        push!(S, "S$i" => [])
+    for j in 1:k
+        push!(S, "S$j" => [])
     end
 
     return S
 end
 
-function setWeights(centroids::Matrix, S::Dict)
+function setWeights(centroids::Matrix, S::Dict, h::Float64)
+
+    """
+    Computes weights from variances calculated also in this function.
+
+    Params:
+    centroids (Matrix): current centroids
+    S (Dict): current subsets containing vectors of each cluster
+    h (Float64)
+
+    Return:
+    (Matrix): new weights
+
+    """
 
     weights = zeros(d, k)
     variances = zeros(d, k)
@@ -39,7 +82,13 @@ function Lw(cₗ, xᵢ, wₗ)
     return √sum(wₗ .* (cₗ - xᵢ).^2)
 end
 
-function indicator(x, Sⱼ)
+function indicator(x::Matrix, Sⱼ::Matrix)
+
+    """
+    Params:
+    x (Matrix): d×1 matrix (column of X)
+    Sⱼ (Matrix): 
+    """
 
     for i in eachcol(Sⱼ)
         (x == i) && return true
@@ -49,29 +98,32 @@ function indicator(x, Sⱼ)
 end
 
 # když se inicializujou centroidy tak zle, že nějaké Sⱼ prázdné -> problém
-function LAC(X, c, k, d; max_iter=20, h=5.0)
+# co přsně dělá 'h'?
+function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=5.0)
 
     """
     Performs LAC algorithm.
 
     Params:
-    X (Matrix{Float64}): points
-    c (Matrix{Float64}): initial centroids
-    k (Int64): number of clusters (centroids respectively)
-    d (Int64): number of dimensions
-    max_iter (Int64): max number of iterations
+    X (Matrix): points
+    c (Matrix): initial centroids
+    k (Int): number of clusters (centroids respectively)
+    d (Int): number of dimensions
+    max_iter (Int): max number of iterations
     h (Float64)
 
     Return:
-    (Matrix{Float64}): trained centroids
+    (Matrix): trained centroids
 
     """
 
-    # init centroids, weightsa and variances
+    # 1., 2. init centroids and weights
     centroids = c
     weights = 1/d * ones(d, k)
 
     for iter in 1:max_iter
+
+        lastWeights = weights
 
         # 3. sort points into the closest clusters
         S = initSubsets(k)
@@ -81,10 +133,10 @@ function LAC(X, c, k, d; max_iter=20, h=5.0)
         end
         S = Dict(["S$i" => hcat(S["S$i"]...) for i in 1:k])
 
-        # 4. recompute weights
-        weights = setWeights(centroids, S)
+        # 4. compute new weights
+        weights = setWeights(centroids, S, h)
 
-        # 5. resort points into Sⱼ
+        # 5. resort points into clusters Sⱼ
         S = initSubsets(k)
         for x in eachcol(X)
             j = argmin(Lw(centroids[:, i], x, weights[:, i]) for i in 1:k)
@@ -95,46 +147,10 @@ function LAC(X, c, k, d; max_iter=20, h=5.0)
         # 6. recompute centroids
         centroids = setCentroids(X, S, k, d)
 
+        # print + convergence check
         println("iteration $iter: centroids $centroids, weights $weights")
+        (abs(sum(weights) - sum(lastWeights)) <= 1e-4) && break
     end
 
     return centroids
 end
-
-# -----------------------------------------------------------------------------------------------
-# later in scripts
-
-X = [ 2.5  1.8 -2.1  3.9 -2.5  2.1 ;
-    3.2  2.9 -3.1 -2.0 -2.8 -3.3 ]
-
-centroids = [ -2.0  2.0 3.1 ;
--2.0  1.2 -1.1 ]
-
-data = hcat(X, centroids)
-labels = [1 1 1 1 1 1 0 0 0]
-
-function plotPoints(data, labels)
-
-    x_coords = vec([i[1] for i in eachcol(data)])
-    y_coords = vec([i[2] for i in eachcol(data)])
-
-    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
-
-    scatter(
-        x_coords,
-        y_coords,
-        color = colors,
-        marker = (10, :circle),
-        xlabel = "x",
-        ylabel = "y",
-        background_color = RGB(0.2, 0.2, 0.2),
-        legend = false
-    )
-end
-
-plotPoints(data, labels)
-
-newCentroids = LAC(X, centroids, 3, 2)
-
-plotPoints(hcat(X, newCentroids), labels)
-

@@ -32,6 +32,9 @@ export train
 include("dataloading.jl")
 export load
 
+include("clustering.jl")
+export LAC
+
 function test()
     Pkg.test("HierarchicalMetric.jl")
 end
@@ -49,5 +52,6 @@ export plotProcess
 export paramsImportance
 
 include("../scripts/LAC-triv.jl")
+export plotPoints
 
-end
+end  # HierarchicalMetric
