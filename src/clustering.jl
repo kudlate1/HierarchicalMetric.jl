@@ -17,7 +17,7 @@ function setCentroids(X::Matrix, S::Dict, k::Int, d::Int)
 
     for i in 1:k
         numerator = (sum(x .* indicator(x, S["S$i"]) for x in eachcol(X)))
-        denominator = sum(indicator(x, S["S$i"]) for x in eachcol(X))
+        denominator = size(S["S$i"], 1) # much faster
         centroids[:, i] = numerator ./ denominator
     end
 
@@ -49,7 +49,7 @@ function initSubsets(k::Int)
     return S
 end
 
-function setWeights(centroids::Matrix, S::Dict, h::Float64)
+function setWeights(centroids::Matrix, S::Dict, h::Float64, k::Int, d::Int)
 
     """
     Computes weights from variances calculated also in this function.
@@ -64,15 +64,15 @@ function setWeights(centroids::Matrix, S::Dict, h::Float64)
 
     """
 
-    weights = zeros(d, k)
+    #weights = zeros(d, k)
     variances = zeros(d, k)
 
     for i in 1:k
         variances[:, i] = sum([((centroids[:, i] - x).^2) ./ length(S["S$i"]) for x in eachcol(S["S$i"])])
-        for l in 1:d
-            weights[l, i] = exp(-variances[l, i] / h) / sum([exp(-variances[idx, i] / h) for idx in 1:d])
-        end
     end
+    # broadcasting is easier to read
+    expX = exp.(-variances ./ h)
+    weights = expX ./ sum(expX, dims=1)
 
     return weights
 end
@@ -82,7 +82,7 @@ function Lw(cₗ, xᵢ, wₗ)
     return √sum(wₗ .* (cₗ - xᵢ).^2)
 end
 
-function indicator(x::Matrix, Sⱼ::Matrix)
+function indicator(x, Sⱼ::Matrix)
 
     """
     Params:
@@ -90,11 +90,7 @@ function indicator(x::Matrix, Sⱼ::Matrix)
     Sⱼ (Matrix): 
     """
 
-    for i in eachcol(Sⱼ)
-        (x == i) && return true
-    end
-
-    return false
+    x in eachcol(Sⱼ) # returns true if x is in Sⱼ else false
 end
 
 # když se inicializujou centroidy tak zle, že nějaké Sⱼ prázdné -> problém
@@ -134,8 +130,8 @@ function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=
         S = Dict(["S$i" => hcat(S["S$i"]...) for i in 1:k])
 
         # 4. compute new weights
-        weights = setWeights(centroids, S, h)
-
+        weights = setWeights(centroids, S, h, k, d)
+        
         # 5. resort points into clusters Sⱼ
         S = initSubsets(k)
         for x in eachcol(X)
@@ -148,8 +144,9 @@ function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=
         centroids = setCentroids(X, S, k, d)
 
         # print + convergence check
-        println("iteration $iter: centroids $centroids, weights $weights")
-        (abs(sum(weights) - sum(lastWeights)) <= 1e-4) && break
+        condition = sum((weights .- lastWeights).^2) # original condition did not make sense to me, I changed it to L2
+        println("iteration $iter: condition $condition: centroids $centroids, weights $weights")
+        (condition <= 1e-4) && break
     end
 
     return centroids
