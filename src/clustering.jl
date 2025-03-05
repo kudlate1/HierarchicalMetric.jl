@@ -64,13 +64,12 @@ function setWeights(centroids::Matrix, S::Dict, h::Float64, k::Int, d::Int)
 
     """
 
-    #weights = zeros(d, k)
     variances = zeros(d, k)
 
     for i in 1:k
         variances[:, i] = sum([((centroids[:, i] - x).^2) ./ length(S["S$i"]) for x in eachcol(S["S$i"])])
     end
-    # broadcasting is easier to read
+    
     expX = exp.(-variances ./ h)
     weights = expX ./ sum(expX, dims=1)
 
@@ -93,9 +92,41 @@ function indicator(x, Sⱼ::Matrix)
     x in eachcol(Sⱼ) # returns true if x is in Sⱼ else false
 end
 
-# když se inicializujou centroidy tak zle, že nějaké Sⱼ prázdné -> problém
-# co přsně dělá 'h'?
-function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=5.0)
+function kmeanspp(X, k::Int)
+
+    """
+    Performs k-means++ initialization for k-means/LAC clustering.
+
+    Params:
+    X: feature vectors
+    k: required number of clusters
+
+    Return:
+    centroids:  proposed centroids for k-means initialization
+
+    """
+
+    n, m = size(X)
+    centroids = zeros(n, k)
+    c1 = rand(1:m)
+    centroids[:, 1] = X[:, c1]
+    pl_distribution = fill(Inf, m)
+
+    for i in 2:k
+      
+        normXi = vec(sum(X .^ 2, dims=1))
+        normXj = sum(centroids[:, 1:i-1] .^ 2, dims=1)
+        dl_2 = minimum(normXj .+ normXi' .- 2 .* (X' * centroids[:, 1:i-1]), dims=2)[:]
+        pl_distribution = min.(pl_distribution, dl_2)
+        idx = rand(Categorical(pl_distribution ./ sum(pl_distribution)))
+        centroids[:, i] = X[:, idx]
+    end
+
+    return centroids
+
+end
+
+function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=0.5)
 
     """
     Performs LAC algorithm.
@@ -114,7 +145,7 @@ function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=
     """
 
     # 1., 2. init centroids and weights
-    centroids = c
+    centroids = kmeanspp(X, k)
     weights = 1/d * ones(d, k)
 
     for iter in 1:max_iter
@@ -149,5 +180,16 @@ function LAC(X::Matrix, c::Matrix, k::Int, d::Int; max_iter::Int=20, h::Float64=
         (condition <= 1e-4) && break
     end
 
-    return centroids
+    return centroids, weights
 end
+
+"""
+1) dopsat LAC do overleafu
+2) přepsat experimenty, datasety
+3) experiment s clusteringem (nezná třídy), vyhodnotit kvalitu
+4) metriky (ari, vmeasure, ...) - Clustering.jl
+
+- do přepsání experimentů přidat dataset, kde každý cluster jinou metriku + otestovat 
+  clustering s globální a lokální metrikou
+  
+"""
