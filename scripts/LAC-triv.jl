@@ -1,6 +1,6 @@
 using HierarchicalMetric
 
-function plotPoints(X, centroids)
+function plot_points(X, centroids)
 
     data = hcat(X, centroids)
     
@@ -26,21 +26,8 @@ centroids = [ -2.0  2.0 3.1 ;
 k = 3
 d = 2
 
-plotPoints(X, centroids)
-newCentroids = LAC(X, centroids, k, d)
-plotPoints(X, newCentroids)
+plot_points(X, centroids)
+new_centroids = LAC(X, k, Lw())
+plotPoints(X, new_centroids)
 
 """
-
-X = [ 2.5  1.8 -2.1  3.9 -2.5  2.1 ;
-      3.2  2.9 -3.1 -2.0 -2.8 -3.3 ]
-
-centroids = [ -2.0  2.0 3.1 ;
-              -2.0  1.2 -1.1 ]
-
-k = 3
-d = 2
-
-plotPoints(X, centroids)
-newCentroids = LAC(X, centroids, k, d)
-plotPoints(X, newCentroids)

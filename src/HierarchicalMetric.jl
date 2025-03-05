@@ -10,13 +10,14 @@ using JSON3
 using Plots
 using Colors
 using Statistics
+using Clustering
+using LinearAlgebra
 
 
+# structure for triplet selection
 abstract type TripletSelectionMethod end
-
 struct SelectRandom <: TripletSelectionMethod end
 struct SelectHard <: TripletSelectionMethod end
-
 export TripletSelectionMethod, SelectHard, SelectRandom
 
 include("triplet-loss.jl")
