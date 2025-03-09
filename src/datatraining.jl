@@ -21,7 +21,7 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
     # Random initialization of weights from 𝒩(0,1) is as follows ....  weight_sampler=randn 
     # weights when used in metric are transformed by weight_transform .... softplus(w), where w ∼ 𝒩(0,1)
 
-    ps = Flux.params(metric)
+    #ps = Flux.params(metric)
     opt = Adam(λ)
     history = []
 
@@ -34,9 +34,9 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
         end
         Flux.update!(state_tree, metric, grad[1])
 
-        push!(history, Flux.destructure(metric)[1])
+        push!(history, softplus.(Flux.destructure(metric)[1]))
         println("Iteration $iter, loss $loss, params = $(softplus.(Flux.destructure(metric)[1]))")
     end
 
-    return ps, history
+    return softplus.(Flux.destructure(metric)[1]), history
 end

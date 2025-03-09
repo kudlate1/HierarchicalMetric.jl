@@ -155,7 +155,7 @@ function selectTriplet(::SelectHard, dists, X, y, metric)
     return triplets[rand(1:length(triplets))]
 end
 
-function tripletLoss(anchor, positive, negative, metric; α = 0.01, λₗₐₛₛₒ = 0.01, weight_transform=identity)
+function tripletLoss(anchor, positive, negative, metric; α = 0.001, λₗₐₛₛₒ = 0.01, weight_transform=identity)
 
     """
     Computes the triplet loss function with Lasso (L1) regularization

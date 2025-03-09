@@ -53,6 +53,9 @@ export plotProcess
 export paramsImportance
 
 include("../scripts/LAC-triv.jl")
-export plotPoints
+export plot_points
+
+include("../scripts/LAC-triv.jl")
+export generate_dataset
 
 end  # HierarchicalMetric

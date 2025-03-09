@@ -15,20 +15,16 @@ function paramsImportance(n)
     """
     X, y = load("data/mutagenesis.json")
     distances = pairwiseDistance(X)
-    metric = reflectmetric(X[1], weight_sampler=randn, weight_transform=softplus) 
 
     counts = zeros(Int64, 13)
     for _ in 1:n
-        ps, h = train(SelectHard(), X, y, distances; max_iter=25);
-        h = reduce(hcat, h)'
-        flat = softplus.(Flux.destructure(metric)[1])
-        println(flat)
-        for i in 1:length(flat)
-            (flat[i] >= 0.1) && (counts[i] += 1)
+        ps, _ = train(SelectHard(), X, y, distances; max_iter=20);
+        for i in 1:length(ps)
+            (ps[i] >= 0.1) && (counts[i] += 1)
         end
     end
 
-    bar(1:length(counts), counts, xlabel="parameters", ylabel="parameter counts")
+    bar(1:length(counts), counts, title="Importance of each parameter", xlabel="parameters", ylabel="parameter counts", label="importance")
     xticks!(1:length(counts))
 end
 

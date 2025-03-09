@@ -52,17 +52,17 @@ function visualiseDistances(distances)
     heatmap(distances, aspect_ratio = 1)
 end
 
-function plotProcess(ps, h)
+# function plotProcess(ps, h)
 
-    p = plot(reduce(hcat, h)', 
-        xlabel="number of iteations", 
-        ylabel="values of the parameters", 
-        title="Parameters learning with lasso regularization"
-    )
-    display(p)
+#     p = plot(reduce(hcat, h)', 
+#         xlabel="number of iteations", 
+#         ylabel="values of the parameters", 
+#         title="Parameters learning with lasso regularization"
+#     )
+#     display(p)
 
-    return vcat(softplus.(ps)[1])
-end
+#     return vcat(softplus.(ps)[1])
+# end
 
 
 """
