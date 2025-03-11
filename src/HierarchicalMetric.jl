@@ -5,11 +5,9 @@ using Random, Distances
 using Flux
 using Mill
 using HSTreeDistance
-using JsonGrinder
-using JSON3
-using Plots
-using Colors
-using Statistics
+using JsonGrinder, JSON3
+using Plots, Colors
+using Statistics, Distributions
 using Clustering
 using LinearAlgebra
 
@@ -35,6 +33,7 @@ export load
 
 include("clustering.jl")
 export LAC
+export kmeanspp
 
 function test()
     Pkg.test("HierarchicalMetric.jl")
@@ -55,7 +54,9 @@ export paramsImportance
 include("../scripts/LAC-triv.jl")
 export plot_points
 
-include("../scripts/LAC-triv.jl")
+include("../scripts/LAC-metrics.jl")
 export generate_dataset
+export plot_classes
+export metrics
 
 end  # HierarchicalMetric
