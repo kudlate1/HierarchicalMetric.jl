@@ -17,9 +17,15 @@ function generate_dataset(n::Int)
     data2 = generate_gaussian_data(mean2, cov2, n)
 
     X = hcat(data1', data2')
-    labels = vcat(fill(1, n), fill(2, n))
+    labels = Int.(vcat(fill(1, n), fill(2, n)))
 
     return X, labels
+end
+
+function weight_transform(X::Matrix, y::Matrix, y_true::Matrix, weights::Matrix)
+
+    X = [x .* weights[:, y[x_i]] for (x_i, x) in enumerate(eachcol(X))]
+    return hcat(X...)
 end
 
 function metrics(X, true_labels, clusters)
@@ -37,12 +43,19 @@ function metrics(X, true_labels, clusters)
     return vm, var, silh, rand
 end
 
-function plot_classes(X, y, k)
+function plot_classes(X, y, k; centroids=Nothing)
 
     p = plot()
     colors = [:red, :blue, :yellow, :green, :orange, :purple, :cyan, :magenta, :brown, :pink]
 
-    for class in 1:k
+    n = 0
+    if centroids == Nothing
+        n = 1
+        X = hcat(X, centroids)
+        y = hcat(clusters, ones(1, k) * (k+1))
+    end
+
+    for class in 1:(k + n)
         class_points = X[:, vec(y) .== class]
         scatter!(
             p, 
@@ -61,14 +74,14 @@ end
 """
 k = 2
 X, true_labels = generate_dataset()
-plotData(X, true_labels)
+plot_classes(X, true_labels, k)
 
 centroids, weights, clusters = LAC(X, k)
+plot_classes(X, clusters, k; centroids)
 
-X2 = hcat(X, centroids)
-y2 = hcat(clusters, ones(1, k) * (k+1))
-plot_classes(X2, y2, k+1)
+X_transformed = weight_transform(X, clusters, true_labels, weights)
+plot_classes(X_transformed, clusters, k; centroids)
 
-vm, var, silh, rand = metrics(X, Int.(vec(true_labels)), Int.(vec(clusters)))
+vm, var, silh, rand = metrics(X, vec(true_labels), vec(clusters))
 
 """

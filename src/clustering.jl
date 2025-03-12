@@ -126,7 +126,7 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=0.5)
     # 1., 2. init centroids, weights and labels
     centroids = kmeanspp(X, k)
     weights = 1/d * ones(d, k)
-    labels = -1 * ones(1, n)
+    labels = -1 * ones(Int, 1, n)
 
     for iter in 1:max_iter
 
