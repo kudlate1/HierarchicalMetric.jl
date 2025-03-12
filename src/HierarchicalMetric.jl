@@ -58,5 +58,6 @@ include("../scripts/LAC-metrics.jl")
 export generate_dataset
 export plot_classes
 export metrics
+export weight_transform
 
 end  # HierarchicalMetric

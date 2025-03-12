@@ -15,8 +15,8 @@ function set_centroids(X::Matrix, labels, k::Int, d::Int)
     centroids = zeros(d, k)
 
     for i in 1:k
-        numerator = (sum(x .* indicator(Int(labels[x_i]), i) for (x_i, x) in enumerate(eachcol(X))))
-        denominator = sum((i == j) && 1 for j in labels)
+        numerator = sum(x for (x_i, x) in enumerate(eachcol(X)) if vec(labels)[x_i] == i)
+        denominator = count(==(i), vec(labels))
         centroids[:, i] = numerator ./ denominator
     end
 
@@ -40,8 +40,7 @@ function set_weights(X, centroids::Matrix, labels::Matrix, h::Float64, k::Int, d
 
     for i in 1:k
         s_i = X[:, vec(labels) .== i]
-        len_si = size(s_i)[2]
-        variances[:, i] = sum([((centroids[:, i] - x).^2) ./ len_si for x in eachcol(s_i)])
+        variances[:, i] = mean(((centroids[:, i] .- s_i).^2), dims=2)
     end
     
     exp_x = exp.(-variances ./ h)
@@ -105,7 +104,7 @@ function kmeanspp(X, k::Int)
     return centroids
 end
 
-function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=0.5)
+function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=2.0)
     """
     Performs LAC algorithm.
 
@@ -131,10 +130,12 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=0.5)
     for iter in 1:max_iter
 
         last_weights = weights
+        last_centroids = centroids
 
         # 3. sort points into the closest clusters
         for (l, x_l) in enumerate(eachcol(X))
-            j = argmin(Lw(centroids[:, i], x_l, weights[:, i]) for i in 1:k)
+            distances = [Lw(centroids[:, i], x_l, weights[:, i]) for i in 1:k]
+            j = argmin(distances)
             labels[l] = j
         end
 
@@ -143,7 +144,8 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=0.5)
         
         # 5. resort points into clusters Sⱼ
         for (l, x_l) in enumerate(eachcol(X))
-            j = argmin(Lw(centroids[:, i], x_l, weights[:, i]) for i in 1:k)
+            distances = [Lw(centroids[:, i], x_l, weights[:, i]) for i in 1:k]
+            j = argmin(distances)
             labels[l] = j
         end
 
@@ -151,9 +153,11 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=0.5)
         centroids = set_centroids(X, labels, k, d)
 
         # print + convergence check
-        condition = sum((weights .- last_weights).^2)
-        println("iteration $iter: centroids $centroids, weights $weights")
-        (condition <= 1e-4) && break
+        weight_diff = sum((weights .- last_weights).^2)
+        centroid_diff = sum((centroids .- last_centroids).^2)
+
+        println("Iteration $iter: weight change = $weight_diff, centroid change = $centroid_diff")
+        (weight_diff <= 1e-4 && centroid_diff <= 1e-4) && break
     end
 
     return centroids, weights, labels
