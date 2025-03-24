@@ -6,12 +6,12 @@ function generate_dataset(n::Int)
         dist = MvNormal(mean, cov)
         return rand(dist, n)'
     end
-    
+
     mean1 = [-3.0, 0.0]
-    cov1 = [1.0 0.0; 0.0 4.0]
+    cov1 = [1.0 0.0; 0.0 4.0] 
     
     mean2 = [3.0, 0.0]
-    cov2 = [4.0 0.0; 0.0 1.0]  
+    cov2 = [4.0 0.0; 0.0 1.0] 
     
     data1 = generate_gaussian_data(mean1, cov1, n)
     data2 = generate_gaussian_data(mean2, cov2, n)
@@ -73,12 +73,11 @@ function plot_classes(X, y, k; centroids=Nothing)
 end
 
 """
-k = 2
-X, true_labels = generate_dataset(200)
-plot_classes(X, true_labels, k)
+X, true_labels = generate_dataset(100)
+plot_classes(X, true_labels, 2)
 
-centroids, weights, clusters = LAC(X, k)
-plot_classes(X, clusters, k; centroids)
+centroids, weights, clusters = LAC(X, 2)
+plot_classes(X, clusters, 2; centroids)
 
 X_transformed = weight_transform(X, clusters, true_labels, weights)
 plot_classes(X_transformed, clusters, k)

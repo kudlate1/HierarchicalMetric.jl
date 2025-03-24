@@ -36,7 +36,9 @@ function plotData(data, labels)
         marker = (10, :circle),
         xlabel = "x",
         ylabel = "y",
-        background_color = RGB(0.2, 0.2, 0.2),
+        background_color = RGB(0.4, 0.4, 0.4),
+        xlims=(-0.1, 0.9),
+        ylims=(0.2, 0.5),
         legend = false
     )
 end
@@ -69,7 +71,7 @@ end
 EXAMPLE OF A TRAINING EXECUTION:
 
 data = Float64[1 3 5 7 9 2 4 6 8 10; 1 1 1 1 1 2 2 2 2 2]
-y = [1 1 1 1 1 0 0 0 0 0]
+y = [1 1 1 1 1 2 2 2 2 2]
 
 plotData(data, y)
 X = createProductNodes(data)

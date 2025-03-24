@@ -27,7 +27,7 @@ k = 3
 d = 2
 
 plot_points(X, centroids)
-new_centroids = LAC(X, k)
+new_centroids, new_weights, new_labels = LAC(X, k)
 plotPoints(X, new_centroids)
 
 """

@@ -1,6 +1,7 @@
 module HierarchicalMetric
 
 using Pkg
+using Revise
 using Random, Distances
 using Flux
 using Mill
