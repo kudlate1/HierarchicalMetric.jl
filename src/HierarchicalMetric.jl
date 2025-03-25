@@ -55,13 +55,11 @@ include("../scripts/muta-train.jl")
 export plotProcess
 export paramsImportance
 
-include("../scripts/LAC-triv.jl")
-export plot_points
-
 include("../scripts/clustering.jl")
 export generate_dataset
-export plot_classes
+export plot_classes_2d
 export metrics
 export weight_transform
+export plot_distributions_2d
 
 end  # HierarchicalMetric
