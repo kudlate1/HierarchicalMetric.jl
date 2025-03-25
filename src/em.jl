@@ -1,7 +1,9 @@
-function init_params(d::Int, k::Int)
+function init_params(X, k::Int)
+
+    d, n = size(X)
 
     μ = X[:, rand(1:n, k)]
-    Σ = [Matrix(I, d, d) for _ in 1:k]
+    Σ = [Matrix(1.0I, d, d) for _ in 1:k]
     π = fill(1/k, k)
 
     return μ, Σ, π
@@ -90,10 +92,10 @@ function EM_GMM(X, k::Int; max_iter::Int=100)
     γ (Matrix): learned posterior probabilities
     """
 
-    d, n = size(X)  # dims, points
+    _, n = size(X)  # dims, points
 
     # 1. init μ, Σ, π, log likelihood and γ
-    μ, Σ, π = init_params(d, k)
+    μ, Σ, π = init_params(X, k)
     loglike_init = -Inf
     γ = zeros(n, k)
 
@@ -109,8 +111,8 @@ function EM_GMM(X, k::Int; max_iter::Int=100)
         π = N / n
 
         # 4. eval log likelihood + convergence check
-        log_likelihood = sum(log(sum(π[k] * gaussian_pdf(X[:, i], μ[:, k], Σ[k]) for k in 1:K)) for i in 1:n)
-        (abs(log_likelihood - log_likelihood_old) < 1e-4) && break
+        log_likelihood = sum(log(sum(π[j] * gaussian(X[:, i], μ[:, j], Σ[j]) for j in 1:k)) for i in 1:n)
+        (abs(log_likelihood - loglike_init) < 1e-4) && break
         loglike_init = log_likelihood
     end
 

@@ -32,9 +32,12 @@ export train
 include("dataloading.jl")
 export load
 
-include("clustering.jl")
+include("lac.jl")
 export LAC
 export kmeanspp
+
+include("em.jl")
+export EM_GMM
 
 function test()
     Pkg.test("HierarchicalMetric.jl")
@@ -55,7 +58,7 @@ export paramsImportance
 include("../scripts/LAC-triv.jl")
 export plot_points
 
-include("../scripts/LAC-metrics.jl")
+include("../scripts/clustering.jl")
 export generate_dataset
 export plot_classes
 export metrics
