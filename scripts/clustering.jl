@@ -1,27 +1,5 @@
 using HierarchicalMetric
 
-function generate_dataset(n::Int)
-
-    function generate_gaussian_data(mean::Vector{Float64}, cov::Matrix{Float64}, n::Int)
-        dist = MvNormal(mean, cov)
-        return rand(dist, n)'
-    end
-
-    mean1 = [-3.0, 0.0]
-    cov1 = [1.0 0.0; 0.0 4.0] 
-    
-    mean2 = [3.0, 0.0]
-    cov2 = [4.0 0.0; 0.0 1.0] 
-    
-    data1 = generate_gaussian_data(mean1, cov1, n)
-    data2 = generate_gaussian_data(mean2, cov2, n)
-
-    X = hcat(data1', data2')
-    labels = Int.(vcat(fill(1, n), fill(2, n)))
-
-    return X, hcat(labels...), hcat(mean1, mean2), [cov1, cov2]
-end
-
 function weight_transform(X::Matrix, y::Matrix, weights::Matrix)
 
     X = [x .* weights[:, y[x_i]] for (x_i, x) in enumerate(eachcol(X))]
@@ -46,7 +24,7 @@ end
 function plot_classes_2d(X, y, k; centroids=Nothing)
 
     p = plot()
-    colors = [:red, :blue, :yellow, :green, :orange, :purple, :cyan, :magenta, :brown, :pink]
+    colors = [:red, :blue, :yellow, :green, :orange, :purple, :cyan]
 
     if centroids != Nothing
         k = k + 1
@@ -63,9 +41,7 @@ function plot_classes_2d(X, y, k; centroids=Nothing)
             class_points[2, :], 
             label="Class $class",
             marker = (5, :circle),
-            color=colors[class],
-            xlims=(-10, 10),
-            ylims=(-10, 10)
+            color=colors[class]
         )
     end
 
@@ -82,10 +58,12 @@ function plot_distributions_2d(X, μ, Σ, γ)
         plot!(ellipse[:, 1], ellipse[:, 2], color=color, linewidth=2)
     end
 
-    _, k = size(γ)
-    assignments = [argmax(γ[i, :]) for i in 1:size(γ, 1)]
+    plot()
+
+    k = size(γ, 2)
+    assignments = [argmax(γᵢ) for γᵢ in eachrow(γ)]
     max_resp = maximum(γ, dims=2)[:]
-    colors = [:red, :blue, :green, :orange, :purple, :cyan, :magenta, :brown, :pink, :yellow]
+    colors = [:red, :blue, :green, :yellow, :orange, :purple, :cyan]
 
     scatter!(
         X[1, :], 
@@ -96,43 +74,127 @@ function plot_distributions_2d(X, μ, Σ, γ)
         markersize=5,
         legend=false
     )
-
-    scatter(
-        μ[1, :],
-        μ[2, :],
-        marker = (10, :cross),
-        color=:black
-    )
     
     for j in 1:k
-        plot_gaussian_ellipse(μ[:, j], Σ[j], colors[j])
+        plot_gaussian_ellipse(μ[:, j], Σ[j], colors[j]);
     end
 
-    title!("Gaussian Mixture Model Clustering (Soft Assignments)")
-
+    title!("Soft assignments of the GMM")
 end
 
-### TESTING LAC ###
+squared_distance(x, y) = sum((x .- y).^2)
+
+means_precision(found_mean, true_mean) = squared_distance(found_mean, true_mean)
+
+covariances_precision(found_cov, true_cov, dims) = sum(squared_distance.(found_cov, true_cov)) / dims
+
+function main_lac_gaussian()
+
+    X, true_labels, true_means, _ = generate_dataset_2d(200, 200)
+    centroids, _, clusters = LAC(X, 2)
+    println("\nTrue means: $true_means, centroids: $centroids")
+
+    _rand = randindex(vec(true_labels), vec(clusters))
+    println("\nClustering quality (RI): $(_rand[2])")
+
+    plot_classes_2d(X, clusters, 2; centroids);
+end
+
+function main_lac_exponential()
+
+    X, true_labels = generate_exponential_2d(200, 200)
+    centroids, _, clusters = LAC(X, 2)
+
+    _rand = randindex(vec(true_labels), vec(clusters))
+    println("\nClustering quality (RI): $(_rand[2])")
+
+    plot_classes_2d(X, clusters, 2; centroids);
+end
+
+function main_lac_uniform()
+
+    X, true_labels = generate_uniform_2d(800, 200);
+    centroids, _, clusters = LAC(X, 2)
+
+    _rand = randindex(vec(true_labels), vec(clusters))
+    println("\nClustering quality (RI): $(_rand[2])")
+
+    plot_classes_2d(X, clusters, 2; centroids);
+end
+
+function main_lac_laplace()
+
+    X, true_labels = generate_laplace_2d(200, 200);
+    centroids, _, clusters = LAC(X, 2)
+
+    _rand = randindex(vec(true_labels), vec(clusters))
+    println("\nClustering quality (RI): $(_rand[2])")
+
+    plot_classes_2d(X, clusters, 2; centroids);
+end
+
+function main_em_gaussian()
+
+    X, _, true_mean, true_cov = generate_dataset_2d(200, 200);
+    μ, Σ, γ = EM_GMM(X, 2);
+    println("\nTrue means: $true_mean, learned means: $μ")
+    println("True covariances: $true_cov, learned covariances: $Σ")
+
+    m = means_precision(μ, true_mean);
+    c = covariances_precision(Σ, true_cov, 2);
+    println("\nMean difference: $m")
+    println("Covariance difference: $c")
+
+    plot_distributions_2d(X, μ, Σ, γ);
+end
+
+function main_em_exponential()
+
+    X, _ = generate_exponential_2d(200, 200);
+    μ, Σ, γ = EM_GMM(X, 2);
+    plot_distributions_2d(X, μ, Σ, γ);
+end
+
+function main_em_uniform()
+
+    X, _ = generate_uniform_2d(200, 200);
+    μ, Σ, γ = EM_GMM(X, 2);
+    plot_distributions_2d(X, μ, Σ, γ);
+end
+
+function main_em_laplace()
+
+    X, _ = generate_laplace_2d(200, 200);
+    μ, Σ, γ = EM_GMM(X, 2);
+    plot_distributions_2d(X, μ, Σ, γ);
+end
+
+
+### TESTING LAC in detail ###
 """
-X, true_labels, _, _ = generate_dataset(100)
-plot_classes(X, true_labels, 2)
+X, true_labels, _, _ = generate_dataset_2d(100)
+plot_classes_2d(X, true_labels, 2)
 
 centroids, weights, clusters = LAC(X, 2)
-plot_classes(X, clusters, 2; centroids)
+plot_classes_2d(X, clusters, 2; centroids)
 
 X_transformed = weight_transform(X, clusters, true_labels, weights)
-plot_classes(X_transformed, clusters, k)
+plot_classes_2d(X_transformed, clusters, k)
 
-vm, var, silh, rand = metrics(X, vec(true_labels), vec(clusters))
+m = means_precision(μ, true_mean)
+c = covariances_precision(Σ, true_cov)
 
+rand = randindex(vec(true_labels), vec(clusters))
 """
 
-### TESTING EM_GMM ###
+### TESTING EM_GMM in detail ###
 """
-X, true_labels, true_μ, true_Σ = generate_dataset(100);
-plot_classes(X, true_labels, 2)
+X, true_labels, true_mean, true_cov = generate_dataset_2d(100);
+plot_classes_2d(X, true_labels, 2)
 
-μ, Σ, π, γ = EM_GMM(X, 2);
+μ, Σ, γ = EM_GMM(X, 2);
 plot_distributions_2d(X, μ, Σ, γ)
 
+m = means_precision(μ, true_mean)
+c = covariances_precision(Σ, true_cov)
 """

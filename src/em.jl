@@ -2,7 +2,8 @@ function init_params(X, k::Int)
 
     d, n = size(X)
 
-    μ = X[:, rand(1:n, k)]
+    #μ = X[:, rand(1:n, k)] # rnd points
+    μ = kmeanspp(X, k)
     Σ = [Matrix(1.0I, d, d) for _ in 1:k]
     π = fill(1/k, k)
 
@@ -43,8 +44,6 @@ function compute_responsibilities(X, μ, Σ, π, γ)
         end
         γ[i, :] ./= total_prob
     end
-
-    return γ
 end
 
 function update_means(X, μ, γ, N)
@@ -75,7 +74,7 @@ function update_covariances(X, μ, Σ, γ, N)
     return Σ
 end
 
-function EM_GMM(X, k::Int; max_iter::Int=100)
+function EM_GMM(X, k::Int; max_iter::Int=200)
     """
     Performs EM algorithm for gaussian mixtures, more details in 
     Bishop - Pattern Recognition and Machine Learning, 2006
@@ -99,10 +98,10 @@ function EM_GMM(X, k::Int; max_iter::Int=100)
     loglike_init = -Inf
     γ = zeros(n, k)
 
-    for _ in 1:max_iter
+    for iter in 1:max_iter
 
         # 2. E-Step: compute responsibilities 
-        γ = compute_responsibilities(X, μ, Σ, π, γ)
+        compute_responsibilities(X, μ, Σ, π, γ)
 
         # 3. M-Step: update parameters
         N = sum(γ, dims=1)[:]
@@ -112,9 +111,14 @@ function EM_GMM(X, k::Int; max_iter::Int=100)
 
         # 4. eval log likelihood + convergence check
         log_likelihood = sum(log(sum(π[j] * gaussian(X[:, i], μ[:, j], Σ[j]) for j in 1:k)) for i in 1:n)
-        (abs(log_likelihood - loglike_init) < 1e-4) && break
+        # logsumexp()
+        diff = abs(log_likelihood - loglike_init)
+        (diff < 1e-4) && break
         loglike_init = log_likelihood
+        println("Iteration: $iter, log likelihood diff: $diff")
     end
 
-    return μ, Σ, π, γ
+
+
+    return μ, Σ, γ
 end

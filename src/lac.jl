@@ -51,8 +51,7 @@ end
 
 function Lw(cₗ, xᵢ, wₗ)
 
-    # '√' can be problematic in case of non-softplus'ed values!
-    return √sum(wₗ .* (cₗ - xᵢ).^2) 
+    return √sum(wₗ.^2 .* (cₗ - xᵢ).^2) 
 end
 
 function indicator(xi_label::Int, j::Int)
@@ -62,7 +61,7 @@ function indicator(xi_label::Int, j::Int)
     j: subset (cluster)
 
     Return:
-    true if xilabel == j else false
+    true if xi_label == j else false
     """
 
     return (xi_label == j) ? 1 : 0
@@ -104,7 +103,7 @@ function kmeanspp(X, k::Int)
     return centroids
 end
 
-function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=2.0)
+function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
     """
     Performs LAC algorithm.
 
@@ -124,6 +123,7 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=2.0)
 
     # 1., 2. init centroids, weights and labels
     centroids = kmeanspp(X, k)
+    #centroids = X[:, rand(1:n, k)] # rnd points
     weights = 1/d * ones(d, k)
     labels = -1 * ones(Int, 1, n)
 
@@ -162,12 +162,3 @@ function LAC(X::Matrix, k::Int; max_iter::Int=20, h::Float64=2.0)
 
     return centroids, weights, labels
 end
-
-"""
-[ ] 1) dopsat LAC do overleafu
-[ ] 2) přepsat experimenty, datasety
-[ ] 3) experiment s clusteringem (nezná třídy), vyhodnotit kvalitu
-[ ] 4) metriky (ari, vmeasure, ...) - Clustering.jl
-[ ] 5) do přepsání experimentů přidat dataset, kde každý cluster jinou metriku + otestovat 
-    clustering s globální a lokální metrikou
-"""
