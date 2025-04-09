@@ -2,7 +2,7 @@ using HierarchicalMetric
 using HierarchicalMetric.Mill
 using HierarchicalMetric.Plots
 
-function paramsImportance(n)
+function params_importance(n)
 
     """
     Trains the parameters trainNumber-times. After every finished training the function
@@ -14,7 +14,7 @@ function paramsImportance(n)
 
     """
     X, y = load("data/mutagenesis.json")
-    distances = pairwiseDistance(X)
+    distances = pairwise_distance(X)
 
     counts = zeros(Int64, 13)
     for _ in 1:n
@@ -26,18 +26,6 @@ function paramsImportance(n)
 
     bar(1:length(counts), counts, title="Importance of each parameter", xlabel="parameters", ylabel="parameter counts", label="importance")
     xticks!(1:length(counts))
-end
-
-function plotProcess(ps, h)
-
-    p = plot(reduce(hcat, h)', 
-        xlabel="number of iteations", 
-        ylabel="values of the parameters", 
-        title="Parameters learning with lasso regularization"
-    )
-    display(p)
-
-    return vcat(softplus.(ps)[1])
 end
 
 """

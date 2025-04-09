@@ -1,6 +1,6 @@
 using Test
 
-function testDistance()
+function test_distance()
 
     X = Float64.([1 -3 0 0 1 2 4 6 0 0; 2 4 0 1 1 3 -3 5 0 2])
     PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
@@ -29,9 +29,9 @@ function testDistance()
     @testset "Testing pairwise matrix" verbose=true begin
         
         @testset "Testing correct output type of pairwiseDistance function" begin
-            matrix1 = pairwiseDistance(product_nodes)
-            matrix2 = pairwiseDistance([product_nodes[1]])
-            matrix3 = pairwiseDistance([])
+            matrix1 = pairwise_distance(product_nodes)
+            matrix2 = pairwise_distance([product_nodes[1]])
+            matrix3 = pairwise_distance([])
             @test matrix1 |> typeof == Matrix{Float64}
             @test matrix2 |> typeof == Matrix{Float64}
             @test matrix3 |> typeof == Matrix{Float64}
@@ -41,13 +41,13 @@ function testDistance()
             X = Float64.([0 0 0; 1 2 3])
             PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
             product_nodes = [PN[i] for i in 1:3]
-            @test round.(pairwiseDistance(product_nodes; wt=identity), digits=5) ≈ [0.0 1.0 2.0;
+            @test round.(pairwise_distance(product_nodes; wt=identity), digits=5) ≈ [0.0 1.0 2.0;
                                                                                     1.0 0.0 1.0;
                                                                                     2.0 1.0 0.0]
             X = Float64.([0 0 0; 1 2 3])
             PN = ProductNode((x = Array(X[1, :]'), y  = Array(X[2, :]')))
             product_nodes = [PN[i] for i in 1:3]
-            @test round.(pairwiseDistance(product_nodes; wt=softplus), digits=5) ≈ [0.0      1.14598  2.29195;
+            @test round.(pairwise_distance(product_nodes; wt=softplus), digits=5) ≈ [0.0      1.14598  2.29195;
                                                                                     1.14598  0.0      1.14598;
                                                                                     2.29195  1.14598  0.0]                                              
         end

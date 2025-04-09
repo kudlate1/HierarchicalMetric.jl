@@ -74,6 +74,25 @@ function update_covariances(X, μ, Σ, γ, N)
     return Σ
 end
 
+function classify_em(γ)
+
+    """
+    Cluster points based on the soft assignments (posterior probabilities γ).
+    The point is assigned to a cluster with the higher posterior probability. 
+
+    Params:
+    γ (Matrix): posterior probabilities
+
+    Return:
+    y (Vector): labels
+    """
+
+    n = size(γ, 1)
+    y = zeros(Int64, n, 1)
+    y .= ifelse.(γ[:, 1] .<= 0.5, 2, 1)
+    return y
+end
+
 function EM_GMM(X, k::Int; max_iter::Int=200)
     """
     Performs EM algorithm for gaussian mixtures, more details in 
@@ -118,7 +137,7 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
         println("Iteration: $iter, log likelihood diff: $diff")
     end
 
+    y = classify_em(γ)
 
-
-    return μ, Σ, γ
+    return μ, Σ, γ, y
 end

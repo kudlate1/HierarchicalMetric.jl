@@ -22,35 +22,14 @@ only(PM2(product_nodes[1], product_nodes[2]))
 
 """
 
-function plotData(data, labels)
-
-    x_coords = vec([i[1] for i in eachcol(data)])
-    y_coords = vec([i[2] for i in eachcol(data)])
-
-    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
-
-    scatter(
-        x_coords,
-        y_coords,
-        color = colors,
-        marker = (10, :circle),
-        xlabel = "x",
-        ylabel = "y",
-        background_color = RGB(0.4, 0.4, 0.4),
-        xlims=(-0.1, 0.9),
-        ylims=(0.2, 0.5),
-        legend = false
-    )
-end
-
-function createProductNodes(data)
+function create_product_nodes(data)
 
     PN = ProductNode((x = Array(data[1, :]'), y  = Array(data[2, :]')))
     X = [PN[i] for i in 1:10]
     return X
 end
 
-function visualiseDistances(distances)
+function visualise_distances(distances)
     heatmap(distances, aspect_ratio = 1)
 end
 

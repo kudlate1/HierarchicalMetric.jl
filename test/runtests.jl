@@ -13,12 +13,14 @@ include("triplet-test.jl")
 
 @testset "HierarchicalMetric.jl - running all the package tests" begin
 
-    testClassSplit()
+    test_class_split()
 
-    testLasso(SelectRandom())
+    test_lasso(SelectRandom())
 
-    testTripletSelection()
+    test_lasso(SelectHard())
 
-    testDistance()
+    test_triplet_selection()
+    
+    test_distance()
 
 end
