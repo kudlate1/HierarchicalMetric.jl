@@ -19,6 +19,14 @@ struct SelectRandom <: TripletSelectionMethod end
 struct SelectHard <: TripletSelectionMethod end
 export TripletSelectionMethod, SelectHard, SelectRandom
 
+# structure for generated data distributions
+abstract type DataDistribution end
+struct GaussianData <: DataDistribution end
+struct ExponentialData <: DataDistribution end 
+struct UniformData <: DataDistribution end
+struct LaplaceData <: DataDistribution end
+export DataDistribution, GaussianData, ExponentialData, UniformData, LaplaceData
+
 include("triplet-loss.jl")
 export pairwise_distance
 export select_triplet
@@ -40,10 +48,8 @@ include("em.jl")
 export EM_GMM
 
 include("datagen.jl")
-export generate_dataset_2d
-export generate_exponential_2d
-export generate_uniform_2d
-export generate_laplace_2d
+export generate_data_2d
+export generate_separable_2d
 
 include("plotfuncs.jl")
 export plot_data
@@ -54,7 +60,6 @@ export plot_distributions_2d
 function test()
     Pkg.test("HierarchicalMetric.jl")
 end
-
 export test
 
 include("../scripts/triplet-triv.jl")
