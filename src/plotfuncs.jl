@@ -18,6 +18,8 @@ function plot_classes_2d(X, y, k; centroids=Nothing)
             class_points[2, :], 
             label="Class $class",
             marker = (5, :circle),
+            xlims=(-10.0, 10.0),
+            ylims=(-10.0, 10.0),
             color=colors[class]
         )
     end
@@ -64,20 +66,22 @@ function plot_data(data, labels)
     x_coords = vec([i[1] for i in eachcol(data)])
     y_coords = vec([i[2] for i in eachcol(data)])
 
-    colors = [label == 1 ? RGB(0.2, 0.2, 0.8) : RGB(0.4, 0.1, 0.2) for label in vec(labels)]
+    colors = [label == 1 ? "red" : "blue" for label in vec(labels)]
 
     scatter(
         x_coords,
         y_coords,
         color = colors,
-        marker = (10, :circle),
         xlabel = "x",
         ylabel = "y",
         background_color = RGB(0.4, 0.4, 0.4),
-        xlims=(-0.1, 0.9),
-        ylims=(0.2, 0.5),
+        markersize=5,
+        xlims=(-20.0, 20.0),
+        ylims=(-20.0, 20.0),
         legend = false
     )
+
+    title!("Separable dataset")
 end
 
 function plot_process(ps, h)

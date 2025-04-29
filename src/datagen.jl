@@ -48,13 +48,13 @@ function generate_data_2d(::ExponentialData, n::Int, m::Int, c₁::Vector, c₂:
 
     An example of the input params:
     rate1 = [4.0, 1.0]
-    shift1 = [-6.0, -6.0]
+    shift1 = [6.0, 6.0]
 
     rate2 = [4.25, 1.0]
     shift2 = [0.0, 0.0]
     """
 
-    function generate_exponential_data(shift::Vector{Float64}, rate::Vector{Float64}, n::Int)
+    function generate_exponential_data(rate::Vector{Float64}, shift::Vector{Float64}, n::Int)
         d1 = Exponential(rate[1])
         d2 = Exponential(rate[2])
         x = rand(d1, n)

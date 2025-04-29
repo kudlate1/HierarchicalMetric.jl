@@ -1,4 +1,4 @@
-function splitClasses(X, y, anchor, anchor_label)
+function split_classes(X, y, anchor, anchor_label)
 
     """
     Based on an anchor splits the classes into positive samples (nodes of 
@@ -24,7 +24,7 @@ function distance(pn1, pn2, metric)
     return only(metric(pn1, pn2))
 end
 
-function pairwiseDistance(X; wt=identity)
+function pairwise_distance(X; wt=identity)
 
     """
     Computes pairwise distances between ProductNodes
@@ -53,17 +53,16 @@ function pairwiseDistance(X; wt=identity)
     return distances
 end
 
-function myMahalanobis(pn1, pn2, w)
+function _mahalanobis_pn(pn1, pn2, w)
  
     x1 = only(pn1.data.x.data)
     y1 = only(pn1.data.y.data)
     x2 = only(pn2.data.x.data)
     y2 = only(pn2.data.y.data)
-    
     return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
 end
 
-function selectTriplet(::SelectRandom, dists, X, y, metric)
+function select_triplet(::SelectRandom, X, y, w)
 
     """
     Every training iteration selects the triplet randomly. 
@@ -79,23 +78,31 @@ function selectTriplet(::SelectRandom, dists, X, y, metric)
 
     """
     
-    perm = Random.randperm(length(X))
+    n = length(y)
+
+    perm = Random.randperm(n)
+    anchor, pos, neg = perm[1], 0, 0
+    anchor_label = y[anchor]
 
     for i in perm
-
-        anchor = X[i]
-        anchor_label = y[i]
-        positives, negatives = splitClasses(X, y, anchor, anchor_label)
-        
-        if (length(positives) != 0)
-            pos = rand(positives)
-            neg = (length(negatives) != 0) && rand(negatives)
-            return anchor, pos, neg
+        if (y[i] == anchor_label && i != anchor)
+            pos = i
+            for j in perm
+                d_pos = distance(X[anchor], X[pos], w)
+                d_neg = distance(X[anchor], X[j], w)
+                if (y[j] != anchor_label && d_pos < d_neg)
+                    neg = j
+                    break
+                end
+            end
+            (neg != 0) && break
         end
     end
+
+    return X[anchor], X[pos], X[neg]
 end
 
-function selectTriplet(::SelectHard, dists, X, y, metric)
+function select_triplet(::SelectHard, X, y, w)
 
     """
     For random k product nodes finds a triplet (the nearest neg 
@@ -112,58 +119,45 @@ function selectTriplet(::SelectHard, dists, X, y, metric)
 
     """
 
-    k = 10
-    n = length(X)
+    n = length(y)
+
     perm = Random.randperm(n)
-    triplets = []
+    anchor, pos, neg = 1, 0, 0
+    anchor_label = y[1]
+
+    d_pos = 0.0
+    d_neg = Inf64
 
     for i in perm
 
-        (k <= 0) && break 
-
-        anchor = X[i]
-        anchor_label = y[i]
-        positives, negatives = splitClasses(X, y, anchor, anchor_label)
-
-        (length(positives) == 0) && continue
-
-        positive = false
-        negative = false
-
-        d_pos = 0.0
-        d_neg = Inf64
-
-        for pos in 1:n
-            if (X[pos] in positives && dists[i, pos] > d_pos)
-                d_pos = dists[i, pos]
-                positive = X[pos]
+        if (y[i] == anchor_label || i != 1)
+            d = distance(X[1], X[i], w)
+            if (d > d_pos)
+                d_pos = d
+                pos = i
             end
         end
-
-        for neg in 1:n
-            if (X[neg] in negatives && dists[i, neg] < d_neg)
-                d_neg = dists[i, neg]
-                negative = X[neg]
+        if (y[i] != anchor_label)
+            d = distance(X[1], X[i], w)
+            if (d < d_neg)
+                d_neg = distances[1, i]
+                neg = i
             end
         end
-
-        k = k-1
-
-        push!(triplets, (anchor, positive, negative))
     end
 
-    return triplets[rand(1:length(triplets))]
+    return X[anchor], X[pos], X[neg]
 end
 
-function tripletLoss(anchor, positive, negative, metric; α = 0.001, λₗₐₛₛₒ = 0.01, weight_transform=identity)
+function triplet_loss(a, p, n, metric; α = 0.1, λₗₐₛₛₒ = 0.1, weight_transform=identity)
 
     """
     Computes the triplet loss function with Lasso (L1) regularization
 
     Params:
-    anchor (ProductNode): an anchor
-    positive (Vector{ProductNode}): positive samples
-    negative (Vector{ProductNode}): negative samples
+    a (ProductNode): an anchor
+    p (ProductNode): positive sample
+    n (ProductNode): negative sample
     metric (reflectmetric): metric used for distance calculation
     α (Float64): a bias used in triplet loss function
     λₗₐₛₛₒ (Float64): Lasso parameter
@@ -171,11 +165,10 @@ function tripletLoss(anchor, positive, negative, metric; α = 0.001, λₗₐₛ
 
     Return:
     (Float64): the loss
-
     """
 
-    d_pos = distance(anchor, positive, metric)
-    d_neg = distance(anchor, negative, metric)
+    d_pos = distance(a, p, metric)
+    d_neg = distance(a, n, metric)
     
     f(x) = weight_transform(x)
     w = Flux.params(metric) 

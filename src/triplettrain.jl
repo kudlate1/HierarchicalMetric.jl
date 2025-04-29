@@ -1,4 +1,4 @@
-function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter=50)
+function train(method::TripletSelectionMethod, X, y; λ=0.1, max_iter=200)
 
     """
     A triplet-based training method using the Flux.jl library
@@ -21,13 +21,16 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
     # Random initialization of weights from 𝒩(0,1) is as follows ....  weight_sampler=randn 
     # weights when used in metric are transformed by weight_transform .... softplus(w), where w ∼ 𝒩(0,1)
 
-    #ps = Flux.params(metric)
     opt = Adam(λ)
     history = []
+    old_loss = Inf
+    i = 0
 
     for iter in 1:max_iter
 
-        anchor, pos, neg = select_triplet(method, distances, X, y, metric)
+        i = i + 1
+
+        anchor, pos, neg = select_triplet(method, X, y, metric)
         state_tree = Flux.setup(opt, metric)
         loss, grad = Flux.withgradient(metric) do m
             triplet_loss(anchor, pos, neg, m; weight_transform=softplus)
@@ -35,8 +38,10 @@ function train(method::TripletSelectionMethod, X, y, distances; λ=0.1, max_iter
         Flux.update!(state_tree, metric, grad[1])
 
         push!(history, softplus.(Flux.destructure(metric)[1]))
-        println("Iteration $iter, loss $loss, params = $(softplus.(Flux.destructure(metric)[1]))")
+        #println("Iteration $iter, loss $loss, params = $(softplus.(Flux.destructure(metric)[1]))")
+        (abs(old_loss - loss) < 1e-5) && break
+        old_loss = loss
     end
 
-    return softplus.(Flux.destructure(metric)[1]), history
+    return softplus.(Flux.destructure(metric)[1]), history, i
 end

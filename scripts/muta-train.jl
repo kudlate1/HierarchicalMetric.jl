@@ -14,13 +14,13 @@ function params_importance(n)
 
     """
     X, y = load("data/mutagenesis.json")
-    distances = pairwise_distance(X)
+    #distances = pairwise_distance(X)
 
     counts = zeros(Int64, 13)
     for _ in 1:n
-        ps, _ = train(SelectHard(), X, y, distances; max_iter=20);
-        for i in 1:length(ps)
-            (ps[i] >= 0.1) && (counts[i] += 1)
+        ps, _ = train(SelectHard(), X, y; max_iter=20);
+        for (i, j) in (ps, counts)
+            (i >= 0.1) && (j += 1)
         end
     end
 
@@ -32,11 +32,11 @@ end
 EXAMPLE OF A TRAINING EXECUTION:
 
 X, y = load("data/mutagenesis.json")
-distances = pairwiseDistance(X)
+distances = pairwise_distance(X)
 
 heatmap(distances, aspect_ratio = 1)
 
 ps, h = train(SelectRandom(), X, y, distances);
-plotProcess(ps, h)
+plot_process(ps, h)
 
 """

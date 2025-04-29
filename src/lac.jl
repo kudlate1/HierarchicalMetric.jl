@@ -15,7 +15,8 @@ function set_centroids(X::Matrix, labels, k::Int, d::Int)
     centroids = zeros(d, k)
 
     for i in 1:k
-        numerator = sum(x for (x_i, x) in enumerate(eachcol(X)) if vec(labels)[x_i] == i)
+        assigned = [x for (x_i, x) in enumerate(eachcol(X)) if vec(labels)[x_i] == i]
+        numerator = (!isempty(assigned)) ? sum(assigned) : zero(X[:, 1])
         denominator = count(==(i), vec(labels))
         centroids[:, i] = numerator ./ denominator
     end
@@ -42,7 +43,6 @@ function set_weights(X, centroids::Matrix, labels::Matrix, h::Float64, k::Int, d
         s_i = X[:, vec(labels) .== i]
         variances[:, i] = mean(((centroids[:, i] .- s_i).^2), dims=2)
     end
-    
     exp_x = exp.(-variances ./ h)
     weights = exp_x ./ sum(exp_x, dims=1)
 
@@ -103,6 +103,46 @@ function kmeanspp(X, k::Int)
     return centroids
 end
 
+function farthest_point(X::Matrix, k::Int)
+
+    """
+    The first point is chosen randomly from the dataset, next 
+    center is the farthest from the existing ones.
+    """
+
+    d, n = size(X)
+
+    centroids = zeros(d, k)
+    selected = falses(n)
+
+    # 1. pick one point at random
+    first_idx = rand(1:n)
+    centroids[:, 1] = X[:, first_idx]
+    selected[first_idx] = true
+
+    # 2. select k-1 farthest points
+    for i in 2:k
+        max_dist = -Inf
+        next_idx = 0
+        for j in 1:n
+            if selected[j]
+                continue
+            end
+            # distance to closest current centroid
+            dists = [sum((X[:, j] .- centroids[:, c]).^2) for c in 1:(i-1)]
+            min_dist = minimum(dists)
+            if min_dist > max_dist
+                max_dist = min_dist
+                next_idx = j
+            end
+        end
+        centroids[:, i] = X[:, next_idx]
+        selected[next_idx] = true
+    end
+
+    return centroids
+end
+
 function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
     """
     Performs LAC algorithm.
@@ -124,13 +164,16 @@ function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
     # 1., 2. init centroids, weights and labels
     centroids = kmeanspp(X, k)
     #centroids = X[:, rand(1:n, k)] # rnd points
+    #centroids = farthest_point(X, k)
     weights = 1/d * ones(d, k)
     labels = -1 * ones(Int, 1, n)
 
+    i = 0
     for iter in 1:max_iter
 
         last_weights = weights
         last_centroids = centroids
+        i = i + 1
 
         # 3. sort points into the closest clusters
         for (l, x_l) in enumerate(eachcol(X))
@@ -152,13 +195,13 @@ function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
         # 6. recompute centroids
         centroids = set_centroids(X, labels, k, d)
 
-        # print + convergence check
+        # 7. convergence check
         weight_diff = sum((weights .- last_weights).^2)
         centroid_diff = sum((centroids .- last_centroids).^2)
 
-        println("Iteration $iter: weight change = $weight_diff, centroid change = $centroid_diff")
+        #println("Iteration $iter: weight change = $weight_diff, centroid change = $centroid_diff")
         (weight_diff <= 1e-4 && centroid_diff <= 1e-4) && break
     end
 
-    return centroids, weights, labels
+    return centroids, weights, labels, i
 end

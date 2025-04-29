@@ -23,9 +23,7 @@ end
 
 squared_distance(x, y) = sum((x .- y).^2)
 
-means_precision(found_mean, true_mean) = squared_distance(found_mean, true_mean)
-
-covariances_precision(found_cov, true_cov, dims) = sum(squared_distance.(found_cov, true_cov)) / dims
+precision(found_params, true_params, dims) = mean([squared_distance(found_params[:, i], true_params[:, i]) for i in 1:dims])
 
 function main_lac_gaussian()
 
@@ -118,6 +116,58 @@ function main_em_laplace()
     plot_distributions_2d(X, μ, Σ, γ);
 end
 
+function test_h(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; iter=100)
+
+    X, y = generate_data_2d(d, n, m, c₁, c₂, v₁, v₂)
+    _h = [0.01, 0.1, 1.0, 5.0, 10.0, 50.0, 100.0]
+
+    for i in _h
+        average_ri = 0.0
+        average_iters = 0
+        for _ in 1:iter
+            _, _, clusters, iters = LAC(X, 2; h=i);
+            ri = randindex(vec(y), vec(clusters))[2]
+            average_ri = average_ri + ri
+            average_iters = average_iters + iters
+        end
+        println("Param h = $i, RI: $(average_ri / iter), avrg iterations: $(average_iters / iter)")
+    end
+end
+
+function test_lac(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; iter=100)
+
+    X, y = generate_data_2d(d, n, m, c₁, c₂, v₁, v₂)
+    average_ri = 0.0
+    average_iters = 0
+    for _ in 1:iter
+        _, _, clusters, iters = LAC(X, 2);
+        ri = randindex(vec(y), vec(clusters))[2]
+        average_ri = average_ri + ri
+        average_iters = average_iters + iters
+    end
+    println("LAC: RI $(average_ri / iter), avrg iterations $(average_iters / iter)")
+end
+
+function test_em(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; iter=100)
+
+    X, y = generate_data_2d(d, n, m, c₁, c₂, v₁, v₂)
+    average_ri = 0.0
+    average_iters = 0.0
+    average_m = 0.0
+    average_c = 0.0
+    for _ in 1:iter
+        μ, Σ, _, clusters, iters = EM_GMM(X, 2)
+        Σ = hcat(Σ...)
+        ri = randindex(vec(y), vec(clusters))[2]
+        average_ri = average_ri + ri
+        average_iters = average_iters + iters
+        m = min(precision(μ, hcat(c₁, c₂), 2), (precision(μ, hcat(c₂, c₁), 2)))
+        c = precision(Σ, hcat(v₁, v₂), 2)
+        average_m = average_m + m
+        average_c = average_c + c
+    end
+    println("EM GMM: RI $(average_ri / iter), avrg iterations $(average_iters / iter), mean diff $(average_m / iter), covariance diff $(average_c / iter)")
+end
 
 ### TESTING LAC in detail ###
 """

@@ -47,6 +47,9 @@ export kmeanspp
 include("em.jl")
 export EM_GMM
 
+include("new.jl")
+export train_new
+
 include("datagen.jl")
 export generate_data_2d
 export generate_separable_2d
@@ -65,6 +68,7 @@ export test
 include("../scripts/triplet-triv.jl")
 export create_product_nodes
 export visualise_distances
+export test_triplet
 
 include("../scripts/muta-train.jl")
 export plot_process
@@ -75,6 +79,9 @@ export metrics
 export weight_transform
 export means_precision
 export covariances_precision
+export test_h
+export test_lac
+export test_em
 export main_lac_gaussian
 export main_lac_exponential
 export main_lac_uniform

@@ -4,6 +4,7 @@ function init_params(X, k::Int)
 
     #μ = X[:, rand(1:n, k)] # rnd points
     μ = kmeanspp(X, k)
+    #μ = farthest_point(X, k)
     Σ = [Matrix(1.0I, d, d) for _ in 1:k]
     π = fill(1/k, k)
 
@@ -117,7 +118,11 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
     loglike_init = -Inf
     γ = zeros(n, k)
 
+    i = 0
+
     for iter in 1:max_iter
+
+        i = i + 1
 
         # 2. E-Step: compute responsibilities 
         compute_responsibilities(X, μ, Σ, π, γ)
@@ -134,10 +139,11 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
         diff = abs(log_likelihood - loglike_init)
         (diff < 1e-4) && break
         loglike_init = log_likelihood
-        println("Iteration: $iter, log likelihood diff: $diff")
+        
+        #println("Iteration: $iter, log likelihood diff: $diff")
     end
 
     y = classify_em(γ)
 
-    return μ, Σ, γ, y
+    return μ, Σ, γ, y, i
 end
