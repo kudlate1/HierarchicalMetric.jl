@@ -115,6 +115,7 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
 
     # 1. init μ, Σ, π, log likelihood and γ
     μ, Σ, π = init_params(X, k)
+    println("$μ")
     loglike_init = -Inf
     γ = zeros(n, k)
 
