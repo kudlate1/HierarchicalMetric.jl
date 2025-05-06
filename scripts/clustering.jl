@@ -1,6 +1,6 @@
 using HierarchicalMetric
 
-function weight_transform(X::Matrix, y::Matrix, weights::Matrix)
+function weight_transform(X::Matrix, y, weights::Matrix)
 
     X = [x .* weights[:, y[x_i]] for (x_i, x) in enumerate(eachcol(X))]
     return hcat(X...)

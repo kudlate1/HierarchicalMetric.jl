@@ -130,7 +130,7 @@ function select_triplet(::SelectHard, X, y, w)
 
     for i in perm
 
-        if (y[i] == anchor_label || i != 1)
+        if (y[i] == anchor_label && i != 1)
             d = distance(X[1], X[i], w)
             if (d > d_pos)
                 d_pos = d
@@ -140,7 +140,7 @@ function select_triplet(::SelectHard, X, y, w)
         if (y[i] != anchor_label)
             d = distance(X[1], X[i], w)
             if (d < d_neg)
-                d_neg = distances[1, i]
+                d_neg = d
                 neg = i
             end
         end
@@ -149,7 +149,7 @@ function select_triplet(::SelectHard, X, y, w)
     return X[anchor], X[pos], X[neg]
 end
 
-function triplet_loss(a, p, n, metric; α = 0.1, λₗₐₛₛₒ = 0.1, weight_transform=identity)
+function triplet_loss(a, p, n, metric; α = 0.3, λₗₐₛₛₒ = 0.1, weight_transform=identity)
 
     """
     Computes the triplet loss function with Lasso (L1) regularization
@@ -181,5 +181,5 @@ function triplet_loss(a, p, n, metric; α = 0.1, λₗₐₛₛₒ = 0.1, weight
 
     reg = sum(x->sum(abs.(f(x))), w)
 
-    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
+    return max(d_pos - d_neg + α, 0)  #+ λₗₐₛₛₒ * reg
 end
