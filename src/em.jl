@@ -2,8 +2,8 @@ function init_params(X, k::Int)
 
     d, n = size(X)
 
-    #μ = X[:, rand(1:n, k)] # rnd points
-    μ = kmeanspp(X, k)
+    μ = X[:, rand(1:n, k)] # rnd points
+    #μ = kmeanspp(X, k)
     #μ = farthest_point(X, k)
     Σ = [Matrix(1.0I, d, d) for _ in 1:k]
     π = fill(1/k, k)
@@ -115,7 +115,6 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
 
     # 1. init μ, Σ, π, log likelihood and γ
     μ, Σ, π = init_params(X, k)
-    println("$μ")
     loglike_init = -Inf
     γ = zeros(n, k)
 
@@ -127,6 +126,8 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
 
         # 2. E-Step: compute responsibilities 
         compute_responsibilities(X, μ, Σ, π, γ)
+        y = classify_em(γ)
+        plot_classes_2d(X, y, 2)
 
         # 3. M-Step: update parameters
         N = sum(γ, dims=1)[:]

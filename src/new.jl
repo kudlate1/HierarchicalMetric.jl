@@ -1,6 +1,12 @@
-function _mahalanobis(x, y, w)
+function _mahalanobis_vec(x, y, w)
 
     return w[1]^2 * (x[1] - y[1])^2 + w[2]^2 * (x[2] - y[2])^2
+end
+
+function _mahalanobis_mtx(x, y, W)
+
+    diff = x - y
+    return dot(diff, inv(W) * diff)
 end
 
 function select_triplet_vec(X, y, W)
@@ -17,14 +23,14 @@ function select_triplet_vec(X, y, W)
     for i in perm
 
         if (y[i] == anchor_label && i != anchor)
-            d = _mahalanobis(X[:, anchor], X[:, i], W[:, y[i]])
+            d = _mahalanobis_mtx(X[:, anchor], X[:, i], W[:, y[i]:y[i]+1])
             if (d > d_pos)
                 d_pos = d
                 pos = i
             end
         end
         if (y[i] != anchor_label)
-            d = _mahalanobis(X[:, anchor], X[:, i], W[:, y[i]])
+            d = _mahalanobis_mtx(X[:, anchor], X[:, i], W[:, y[i]:y[i]+1])
             if (d < d_neg)
                 d_neg = d
                 neg = i
@@ -35,10 +41,12 @@ function select_triplet_vec(X, y, W)
     return X[:, anchor], X[:, pos], X[:, neg], y[pos], y[neg]
 end
 
-function triplet_loss_vec(a, p, n, y_p, y_n, W; α = 0.1, λₗₐₛₛₒ = 0.3)
+function triplet_loss_vec(a, p, n, y_p, y_n, W; α = 1.0, λₗₐₛₛₒ = 0.3)
 
-    d_pos = _mahalanobis(a, p, W[:, y_p])
-    d_neg = _mahalanobis(a, n, W[:, y_n])
+    d = size(W, 1) 
+
+    d_pos = _mahalanobis_mtx(a, p, W[:, d*y_p - 1: d*y_p])
+    d_neg = _mahalanobis_mtx(a, n, W[:, d*y_n - 1: d*y_n])
     reg = sum(abs, W)
     return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end
@@ -62,33 +70,29 @@ end
 
 function compute_responsibilities_new(X, c, W, π, γ, h)
 
-    n = size(X, 2)
+    d, n = size(X)
     k = size(c, 2)
 
     for i in 1:n
         total_prob = 0.0
         for j in 1:k
-            γ[i, j] = π[j] * exp(-_mahalanobis(X[:, i], c[:, j], W[:, j]) / h)
+            γ[i, j] = π[j] * exp(-_mahalanobis_mtx(X[:, i], c[:, j], W[:, j*d - 1: j*d]) / h)
             total_prob += γ[i, j]
         end
         γ[i, :] ./= total_prob
     end
 end
 
-function train_new(X, k; h=1.0, λ=0.001, max_iter=50)
-
-    """
-    Clustering poměrně dobrý
-    Jak poznám, kdy skončit? -> rozdíl old a new sillhouttes nebo tak něco?...
-    """
+function train_new(X, k; h=0.5, λ=0.001, max_iter=50)
 
     d, n = size(X)
 
     # 1. init
-    #c = kmeanspp(X, k)
-    c = X[:, rand(1:n, k)]
+    c = kmeanspp(X, k)
+    #c = X[:, rand(1:n, k)]
     γ = zeros(n, k)
-    W = ones(d, k)  # each cluster has a params w₁ and w₂ (for each dim)
+    #W = ones(d, k)  # each cluster has a params w₁ and w₂ (for each dim)
+    W = [1.0 0.0 1.0 0.0; 0.0 1.0 0.0 1.0]
     π = fill(1/k, k)
     y = zeros(Int64, n)
 
@@ -111,7 +115,7 @@ function train_new(X, k; h=1.0, λ=0.001, max_iter=50)
         π = N / n
 
         # 4. triplet loss: update weights W
-        for j in 1:5
+        for j in 1:50
             anchor, pos, neg, y_p, y_n = select_triplet_vec(X, y, W)
             state_tree = Flux.setup(opt, W)
             loss, grad = Flux.withgradient(W) do w
@@ -119,16 +123,14 @@ function train_new(X, k; h=1.0, λ=0.001, max_iter=50)
             end
             Flux.update!(state_tree, W, grad[1])
 
-            # 5. Convergence check
             push!(history, vcat(W...))
             println("Iteration $iter.$j, loss $loss, anchor $anchor, params = $W")
         end
-
+        # 5. Convergence check
         weight_diff = sum((W .- last_weights).^2)
         centroid_diff = sum((c .- last_centroids).^2)
         (weight_diff <= 1e-4 && centroid_diff <= 1e-4) && break
     end
-
     return c, y, W, history
 end
 
