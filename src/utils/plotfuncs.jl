@@ -2,6 +2,7 @@ function plot_classes_2d(X, y, k; centroids=Nothing)
 
     p = plot()
     colors = [:red, :blue, :yellow, :green, :orange, :purple, :cyan]
+    (typeof(y) <: Vector) && (y = hcat(y...))
 
     if centroids != Nothing
         k = k + 1
@@ -18,8 +19,6 @@ function plot_classes_2d(X, y, k; centroids=Nothing)
             class_points[2, :], 
             label="Class $class",
             marker = (5, :circle),
-            xlims=(-10.0, 10.0),
-            ylims=(-10.0, 10.0),
             color=colors[class]
         )
     end

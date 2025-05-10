@@ -65,6 +65,8 @@ distances = pairwise_distance(X)
 visualise_distances(distances)
 
 ps, h = train(SelectRandom(), X, y);
+plot_process(ps, h)
+
 X2 = [x .* ps for x in eachcol(data)]
 X3 = hcat(X2...)
 plot_classes_2d(X3, y, 2)
