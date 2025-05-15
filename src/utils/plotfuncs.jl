@@ -14,14 +14,15 @@ function plot_classes_2d(X, y, k; centroids=Nothing)
         class_points = X[:, vec(y) .== class]
         scatter!(
             p, 
-            background_color = RGB(0.4, 0.4, 0.4), 
             class_points[1, :], 
-            class_points[2, :], 
+            class_points[2, :],
             label="Class $class",
             marker = (5, :circle),
             color=colors[class]
         )
     end
+
+    #title!("Labels of the LAT, phase $iter")
 
     display(p)
 end
@@ -36,7 +37,7 @@ function plot_distributions_2d(X, μ, Σ, γ)
         plot!(ellipse[:, 1], ellipse[:, 2], color=color, linewidth=2)
     end
 
-    plot()
+    p = plot()
 
     k = size(γ, 2)
     assignments = [argmax(γᵢ) for γᵢ in eachrow(γ)]
@@ -44,6 +45,7 @@ function plot_distributions_2d(X, μ, Σ, γ)
     colors = [:red, :blue, :green, :yellow, :orange, :purple, :cyan]
 
     scatter!(
+        p,
         X[1, :], 
         X[2, :], 
         c=assignments, 
@@ -58,6 +60,8 @@ function plot_distributions_2d(X, μ, Σ, γ)
     end
 
     title!("Soft assignments of the GMM")
+
+    return p
 end
 
 function plot_data(data, labels)

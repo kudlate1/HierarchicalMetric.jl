@@ -61,10 +61,7 @@ data, y = generate_separable_2d(GaussianData(), 50, 50,
 
 X = create_product_nodes(data)
 
-distances = pairwise_distance(X)
-visualise_distances(distances)
-
-ps, h = train(SelectRandom(), X, y);
+ps, h = train_tl_htd(SelectRandom(), X, y; λ=0.03, α = 1.0, λₗₐₛₛₒ = 0.0, max_iter=50);
 plot_process(ps, h)
 
 X2 = [x .* ps for x in eachcol(data)]

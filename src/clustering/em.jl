@@ -1,4 +1,4 @@
-function EM_GMM(X, k::Int; max_iter::Int=200)
+function EM_GMM(init::InitCenters, X::Matrix, k::Int; max_iter::Int=200)
     """
     Performs EM algorithm for gaussian mixtures, more details in 
     Bishop - Pattern Recognition and Machine Learning, 2006
@@ -18,7 +18,7 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
     d, n = size(X)  # dims, points
 
     # 1. init μ, Σ, π, log likelihood and γ
-    μ = init_centers(Kmeanspp(), X, k)
+    μ = init_centers(init, X, k)
     Σ = [Matrix(1.0I, d, d) for _ in 1:k]
     π = fill(1/k, k)
     loglike_init = -Inf
@@ -44,7 +44,7 @@ function EM_GMM(X, k::Int; max_iter::Int=200)
         (diff < 1e-4) && break
         loglike_init = log_likelihood
         
-        println("Iteration: $iter, log likelihood: $log_likelihood")
+        #println("Iteration: $iter, log likelihood: $log_likelihood")
     end
 
     y = classify(γ)

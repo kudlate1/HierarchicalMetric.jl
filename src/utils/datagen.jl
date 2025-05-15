@@ -121,11 +121,11 @@ function generate_data_2d(::LaplaceData, n::Int, m::Int, c₁::Vector, c₂::Vec
     Matrix with point and their ground labels
 
     An example of the input params:
-    mean1 = [-4.0, 0.0]
-    scale1 = [1.0, 2.0]
+    mean1 = [1.0, 1.0]
+    scale1 = [-4.5, 0.0]
     
-    mean2 = [4.0, 0.0]
-    scale2 = [2.0, 1.0] 
+    mean2 = [1.0, 1.0]
+    scale2 = [4.5, 0.0] 
     """
 
     function generate_laplace_data(mean::Vector{Float64}, scale::Vector{Float64}, n::Int)

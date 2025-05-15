@@ -64,6 +64,7 @@ export update_centers
 export update_covariances
 export classify
 export compute_responsibilities_lat
+export compute_responsibilities_htd
 export init_centers
 export metrics
 export weight_transform
@@ -77,6 +78,11 @@ export EM_GMM
 
 include("clustering/lat.jl")
 export LAT_vec
+export LAT_htd
+
+include("tripletloss/triplet-loss.jl")
+export pairwise_distance_htd
+export pairwise_distancei
 
 # --------------------------------------------------------------
 

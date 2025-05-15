@@ -1,4 +1,4 @@
-function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
+function LAC(init::InitCenters, X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
     """
     Performs LAC algorithm.
 
@@ -17,7 +17,7 @@ function LAC(X::Matrix, k::Int; max_iter::Int=50, h::Float64=10.0)
     d, n = size(X) # dims, points
 
     # 1., 2. init centroids, weights and labels
-    c = init_centers(Kmeanspp(), X, k)
+    c = init_centers(init, X, k)
     #centroids = X[:, rand(1:n, k)] # rnd points
     #centroids = farthest_point(X, k)
     w = 1/d * ones(d, k)
