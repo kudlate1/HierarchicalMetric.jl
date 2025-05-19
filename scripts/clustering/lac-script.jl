@@ -13,7 +13,7 @@ plot_classes_2d(X_transformed, clusters, k)
 m = means_precision(μ, true_mean)
 """
 
-function test_h(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; iter=100)
+function test_h(d::DataDistribution, init::InitCenters, n::Int, m::Int, c₁, c₂, v₁, v₂; iter=100)
 
     X, y = generate_data_2d(d, n, m, c₁, c₂, v₁, v₂)
     _h = [0.01, 0.1, 1.0, 5.0, 10.0, 50.0, 100.0]
@@ -22,7 +22,7 @@ function test_h(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; ite
         average_ri = 0.0
         average_iters = 0
         for _ in 1:iter
-            _, _, clusters, iters = LAC(X, 2; h=i);
+            _, _, clusters, iters = LAC(init, X, 2; h=i);
             ri = randindex(vec(y), vec(clusters))[2]
             average_ri = average_ri + ri
             average_iters = average_iters + iters
@@ -31,10 +31,10 @@ function test_h(d::DataDistribution, n::Int, m::Int, c₁, c₂, v₁, v₂; ite
     end
 end
 
-function main_lac_gaussian()
+function main_lac_gaussian(init::InitCenters)
 
     X, true_labels, true_means, _ = generate_dataset_2d(200, 200)
-    centroids, _, clusters = LAC(X, 2)
+    centroids, _, clusters = LAC(init, X, 2)
     println("\nTrue means: $true_means, centroids: $centroids")
 
     _rand = randindex(vec(true_labels), vec(clusters))
@@ -43,10 +43,10 @@ function main_lac_gaussian()
     plot_classes_2d(X, clusters, 2; centroids);
 end
 
-function main_lac_exponential()
+function main_lac_exponential(init::InitCenters)
 
     X, true_labels = generate_exponential_2d(200, 200)
-    centroids, _, clusters = LAC(X, 2)
+    centroids, _, clusters = LAC(init, X, 2)
 
     _rand = randindex(vec(true_labels), vec(clusters))
     println("\nClustering quality (RI): $(_rand[2])")
@@ -54,10 +54,10 @@ function main_lac_exponential()
     plot_classes_2d(X, clusters, 2; centroids);
 end
 
-function main_lac_uniform()
+function main_lac_uniform(init::InitCenters)
 
     X, true_labels = generate_uniform_2d(800, 200);
-    centroids, _, clusters = LAC(X, 2)
+    centroids, _, clusters = LAC(Kmeanspp(), X, 2)
 
     _rand = randindex(vec(true_labels), vec(clusters))
     println("\nClustering quality (RI): $(_rand[2])")
@@ -68,7 +68,7 @@ end
 function main_lac_laplace()
 
     X, true_labels = generate_laplace_2d(200, 200);
-    centroids, _, clusters = LAC(X, 2)
+    centroids, _, clusters = LAC(Kmeanspp(), X, 2)
 
     _rand = randindex(vec(true_labels), vec(clusters))
     println("\nClustering quality (RI): $(_rand[2])")

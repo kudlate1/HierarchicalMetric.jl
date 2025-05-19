@@ -49,7 +49,6 @@ function plot_distributions_2d(X, μ, Σ, γ)
         X[1, :], 
         X[2, :], 
         c=assignments, 
-        background_color = RGB(0.4, 0.4, 0.4), 
         marker_z=max_resp,
         markersize=5,
         legend=false
@@ -59,7 +58,7 @@ function plot_distributions_2d(X, μ, Σ, γ)
         plot_gaussian_ellipse(μ[:, j], Σ[j], colors[j]);
     end
 
-    title!("Soft assignments of the GMM")
+    title!("Soft assignments of the LAT")
 
     return p
 end

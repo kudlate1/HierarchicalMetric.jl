@@ -5,7 +5,7 @@ using HierarchicalMetric
 X, y = generate_data_2d(GaussianData(), 500, 500, 
           [-4.0, 0.0], [4.0, 0.0], [2.0 0.0; 0.0 2.0], [2.0 0.0; 0.0 2.0])
 
-centroids, y_new, weights, probs, h = LAT_vec(Kmeanspp(), X, 2);
+centroids, idxs, y_new, weights, probs, h, losses, iters = LAT_vec(Kmeanspp(), X, 2);
 
 plot_classes_2d(X, y_new, 2)
 plot_distributions_2d(X, centroids, weights, probs)

@@ -18,7 +18,7 @@ function split_classes(X, y, anchor, anchor_label)
 end
 
 function htd(pn1, pn2, metric)
-    return only(metric(pn1, pn2)) # rozmysli, jak fungujou váhy!
+    return only(metric(pn1, pn2))
 end
 
 function _mahalanobis_vec(x, y, w)
@@ -83,7 +83,7 @@ function select_triplet_lat_vec(X::Matrix, c::Matrix, y::Vector, W)
         end
     end
     (neg == 0) && return zeros(d), zeros(d), zeros(d), 0, 0
-    return X[:, anchor], X[:, pos], X[:, neg], y[pos], y[neg]
+    return c[:, anchor], X[:, pos], X[:, neg], y[pos], y[neg]
 end
 
 function _mahalanobis_pn(pn1, pn2, w)
@@ -176,7 +176,7 @@ function select_triplet_lat_htd(X, c, y, W)
         end
     end
     (neg == 0) && return zeros(10), zeros(10), zeros(10), 0, 0
-    return X[anchor], X[pos], X[neg], y[pos], y[neg]
+    return c[anchor], X[pos], X[neg], y[pos], y[neg]
 end
 
 function select_triplet_htd(::SelectRandom, X, y, w)
@@ -270,12 +270,13 @@ function triplet_loss_htd(a, p, n, y_p, y_n, W; α = 0.3, λₗₐₛₛₒ = 0.
     d_pos = htd(a, p, W[y_p])
     d_neg = htd(a, n, W[y_n])
     f(x) = weight_transform(x)
-    w = Flux.params(W)
-    reg = sum(x->sum(abs.(f(x))), w)
+    p = [softplus.(Flux.destructure(w)[1] for w in W)]
+    _params = reduce(vcat, reduce(vcat, p))
+    reg = sum(x->sum(abs.(f(x))), _params)
     return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end
 
-function triplet_loss_vec(a, p, n, y_p, y_n, W; α = 5.0, λₗₐₛₛₒ = 0.1)
+function triplet_loss_vec(a, p, n, y_p, y_n, W; α = 0.5, λₗₐₛₛₒ = 0.01)
     d_pos = _mahalanobis_mtx(a, p, W[y_p] * W[y_p]')
     d_neg = _mahalanobis_mtx(a, n, W[y_n] * W[y_n]')
     reg = sum(sum(abs, i) for i in W)

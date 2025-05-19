@@ -102,6 +102,7 @@ function compute_responsibilities_gmm(X, μ, Σ, π, γ)
         end
         γ[i, :] ./= total_prob
     end
+    return γ
 end
 
 function compute_responsibilities_htd(X, c, W, π, γ, h)

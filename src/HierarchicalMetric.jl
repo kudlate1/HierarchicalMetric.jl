@@ -38,6 +38,7 @@ export Kmeanspp, FarthestPoint, RandomPoint, InitCenters
 # --------------------------------------------------------------
 
 include("tripletloss/triplet-loss.jl")
+export pairwise_distance
 export pairwise_distance_htd
 export select_triplet_htd
 export triplet_loss_htd
@@ -79,10 +80,6 @@ export EM_GMM
 include("clustering/lat.jl")
 export LAT_vec
 export LAT_htd
-
-include("tripletloss/triplet-loss.jl")
-export pairwise_distance_htd
-export pairwise_distancei
 
 # --------------------------------------------------------------
 
