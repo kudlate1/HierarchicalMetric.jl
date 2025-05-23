@@ -22,14 +22,12 @@ function train_tl_htd(method::TripletSelectionMethod, X, y; λ=0.03, α = 5.0, �
         anchor, pos, neg = select_triplet_htd(method, X, y, metric)
         state_tree = Flux.setup(opt, metric)
         loss, grad = Flux.withgradient(metric) do m
-            triplet_loss_htd(anchor, pos, neg, m; α = α, λₗₐₛₛₒ = λₗₐₛₛₒ, weight_transform=softplus)
+            triplet_loss_htd_global(anchor, pos, neg, m; α = α, λₗₐₛₛₒ = λₗₐₛₛₒ, weight_transform=softplus)
         end
         Flux.update!(state_tree, metric, grad[1])
         _params = softplus.(Flux.destructure(metric)[1])
         push!(history, _params)
         println("Iteration $iter, loss $loss, triplet (a, p, n) = ($anchor, $pos, $neg), params = $_params")
-        #(abs(old_loss - loss) < 1e-5) && break
-        #old_loss = loss
     end
     return _params, history, iters
 end

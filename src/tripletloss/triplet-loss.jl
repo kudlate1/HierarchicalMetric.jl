@@ -18,17 +18,81 @@ function split_classes(X, y, anchor, anchor_label)
 end
 
 function htd(pn1, pn2, metric)
+    """
+    HTD, metric for structured data
+    """
     return only(metric(pn1, pn2))
 end
 
 function _mahalanobis_vec(x, y, w)
+    """
+    Mahalanobis with two weights w₁ and w₂ in a vector
+    """
     return w[1]^2 * (x[1] - y[1])^2 + w[2]^2 * (x[2] - y[2])^2
 end
 
 function _mahalanobis_mtx(x, y, W)
+    """
+    Mahalanobis with weights stored in matrix
+    """
     diff = x - y
     Σ = W * W'
     return dot(diff, Σ \ diff)
+end
+
+function _mahalanobis_pn(pn1, pn2, w)
+    """
+    Mahalanobis for ProductNodes with two weights w₁ and w₂ in a vector
+    """
+    x1 = only(pn1.data.x.data)
+    y1 = only(pn1.data.y.data)
+    x2 = only(pn2.data.x.data)
+    y2 = only(pn2.data.y.data)
+    return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
+end
+
+function pairwise_distance(X, y, W)
+    """
+    Computes pairwise distances between ProductNodes
+
+    Params:
+    X (Vector{ProductNode}): an array of ProductNodes (dataset)
+    wt (WeightStruct): weight transform (identity/softmax)
+
+    Return:
+    Matrix{Float64}: matrix with pairwise distances 
+    """
+    n = size(X, 2)
+    (n == 0) && return zeros(Float64, 1, 1)
+    distances = zeros((n, n))
+    for i in 1:n
+        for j in 1:n
+            (i != j) && (distances[i, j] = _mahalanobis_mtx(X[:, i], X[:, j], W[y[i]]))
+        end
+    end
+    return distances
+end
+
+function pairwise_distance_htd(X, y, metric; wt=identity)
+    """
+    Computes pairwise distances between ProductNodes
+
+    Params:
+    X (Vector{ProductNode}): an array of ProductNodes (dataset)
+    wt (WeightStruct): weight transform (identity/softmax)
+
+    Return:
+    Matrix{Float64}: matrix with pairwise distances 
+    """
+    n = length(X)
+    (n == 0) && return zeros(Float64, 1, 1)
+    distances = zeros((n, n))
+    for i in 1:n
+        for j in 1:n
+            (i != j) && (distances[i, j] = htd(X[i], X[j], metric[y[i]]))
+        end
+    end
+    return distances
 end
 
 function select_triplet_vec(X, y::Vector, W)
@@ -84,58 +148,6 @@ function select_triplet_lat_vec(X::Matrix, c::Matrix, y::Vector, W)
     end
     (neg == 0) && return zeros(d), zeros(d), zeros(d), 0, 0
     return c[:, anchor], X[:, pos], X[:, neg], y[pos], y[neg]
-end
-
-function _mahalanobis_pn(pn1, pn2, w)
-    x1 = only(pn1.data.x.data)
-    y1 = only(pn1.data.y.data)
-    x2 = only(pn2.data.x.data)
-    y2 = only(pn2.data.y.data)
-    return w[1]^2 * (x1 - x2)^2 + w[2]^2 * (y1 - y2)^2
-end
-
-function pairwise_distance(X, y, W)
-    """
-    Computes pairwise distances between ProductNodes
-
-    Params:
-    X (Vector{ProductNode}): an array of ProductNodes (dataset)
-    wt (WeightStruct): weight transform (identity/softmax)
-
-    Return:
-    Matrix{Float64}: matrix with pairwise distances 
-    """
-    n = size(X, 2)
-    (n == 0) && return zeros(Float64, 1, 1)
-    distances = zeros((n, n))
-    for i in 1:n
-        for j in 1:n
-            (i != j) && (distances[i, j] = _mahalanobis_mtx(X[:, i], X[:, j], W[y[i]]))
-        end
-    end
-    return distances
-end
-
-function pairwise_distance_htd(X, y, metric; wt=identity)
-    """
-    Computes pairwise distances between ProductNodes
-
-    Params:
-    X (Vector{ProductNode}): an array of ProductNodes (dataset)
-    wt (WeightStruct): weight transform (identity/softmax)
-
-    Return:
-    Matrix{Float64}: matrix with pairwise distances 
-    """
-    n = length(X)
-    (n == 0) && return zeros(Float64, 1, 1)
-    distances = zeros((n, n))
-    for i in 1:n
-        for j in 1:n
-            (i != j) && (distances[i, j] = htd(X[i], X[j], metric[y[i]]))
-        end
-    end
-    return distances
 end
 
 function select_triplet_lat_htd(X, c, y, W)
@@ -272,6 +284,16 @@ function triplet_loss_htd(a, p, n, y_p, y_n, W; α = 0.3, λₗₐₛₛₒ = 0.
     f(x) = weight_transform(x)
     p = [softplus.(Flux.destructure(w)[1] for w in W)]
     _params = reduce(vcat, reduce(vcat, p))
+    reg = sum(x->sum(abs.(f(x))), _params)
+    return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
+end
+
+function triplet_loss_htd_global(a, p, n, W; α = 0.3, λₗₐₛₛₒ = 100000.0, weight_transform=identity)
+    d_pos = htd(a, p, W)
+    d_neg = htd(a, n, W)
+    f(x) = weight_transform(x)
+    p = softplus.(Flux.destructure(W)[1])
+    _params = reduce(vcat, p)
     reg = sum(x->sum(abs.(f(x))), _params)
     return max(d_pos - d_neg + α, 0) + λₗₐₛₛₒ * reg
 end

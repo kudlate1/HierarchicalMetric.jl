@@ -1,5 +1,11 @@
 module HierarchicalMetric
 
+#####################################################
+#                                                   #
+# https://github.com/kudlate1/HierarchicalMetric.jl #
+#                                                   #
+#####################################################
+
 using Pkg
 using Revise
 using Random, Distances
@@ -42,6 +48,7 @@ export pairwise_distance
 export pairwise_distance_htd
 export select_triplet_htd
 export triplet_loss_htd
+export triplet_loss_htd_global
 export _mahalanobis_pn
 export htd
 export _mahalanobis_vec
@@ -85,7 +92,6 @@ export LAT_htd
 
 include("../scripts/tripletloss/triplet-triv.jl")
 export create_product_nodes
-export visualise_distances
 export test_triplet
 
 include("../scripts/tripletloss/muta-train.jl")
@@ -113,6 +119,7 @@ export main_lac_laplace
 
 include("../scripts/lat-script.jl")
 export test_lat
+export test_muta_lat
 
 # --------------------------------------------------------------
 
@@ -128,6 +135,8 @@ export plot_data
 export plot_process
 export plot_classes_2d
 export plot_distributions_2d
+export plot_ratio
+export visualise_distances
 
 # --------------------------------------------------------------
 

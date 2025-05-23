@@ -29,23 +29,18 @@ function create_product_nodes(data)
     return X
 end
 
-function visualise_distances(distances)
-    heatmap(distances, aspect_ratio = 1)
-end
-
 function test_triplet(max_iter::Int)
 
     λ = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     data, y = generate_separable_2d(GaussianData(), 50, 50, [-1.0, 0.0], [1.0, 0.0], [0.1 0.0; 0.0 10.0], [0.1 0.0; 0.0 10.0])
     X = create_product_nodes(data)
-    distances = pairwise_distance(X)
 
     for l in λ
         avrg_iters = 0.0
         avrg_w1 = 0.0
         avrg_w2 = 0.0
         for _ in 1:max_iter
-            ps, _, iters = train(SelectRandom(), X, y; λ=l);
+            ps, _, iters = train_tl_htd(SelectRandom(), X, y; λ=l);
             avrg_iters = avrg_iters + iters
             avrg_w1 = avrg_w1 + ps[1]
             avrg_w2 = avrg_w2 + ps[2]

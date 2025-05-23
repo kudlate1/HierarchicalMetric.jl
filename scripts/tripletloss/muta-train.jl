@@ -14,7 +14,6 @@ function params_importance(n)
 
     """
     X, y = load("data/mutagenesis.json")
-    #distances = pairwise_distance(X)
 
     counts = zeros(Int64, 13)
     for _ in 1:n

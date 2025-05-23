@@ -205,7 +205,6 @@ function init_centers(::FarthestPoint, X::Matrix, k::Int)
         next_idx = 0
         for j in 1:n
             selected[j] && continue
-            # distance to closest current centroid
             dists = [sum((X[:, j] .- centroids[:, c]).^2) for c in 1:(i-1)]
             min_dist = minimum(dists)
             if min_dist > max_dist
@@ -232,12 +231,8 @@ end
 function metrics(X, true_labels, clusters)
     vm = vmeasure(true_labels, clusters)
     var = varinfo(true_labels, clusters)
-    # distances = pairwise(Euclidean(), X')
-    # silh = silhouettes(distances, Float64.(true_labels))
-    silh = Nothing
     rand = randindex(true_labels, clusters)
-    return vm, var, silh, rand
-    # FIXME: silhouettes do not work
+    return vm, var, rand
 end
 
 squared_distance(x, y) = sum((x .- y).^2)

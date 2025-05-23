@@ -22,17 +22,44 @@ function test_lat(d::DataDistribution, init::InitCenters, n::Int, m::Int, c₁, 
     average_m = 0.0
     average_c = 0.0
     for _ in 1:iter
-        c, clusters, w, probs, h, iters = LAT_vec(init, X, 2)
+        _, clusters, w, _, _, iters = LAT_vec(init, X, 2)
         w = hcat(w...)
         ri = randindex(vec(y), vec(clusters))[2]
         average_ri = average_ri + ri
         average_iters = average_iters + iters
-        # m = min(_precision(c, hcat(c₁, c₂), 2), _precision(c, hcat(c₂, c₁), 2))
-        # c = min(_precision(w, hcat(v₁, v₂), 2), _precision(w, hcat(v₂, v₁), 2))
-        # average_m = average_m + m
-        # average_c = average_c + c
     end
     println("LAT: RI $(average_ri / iter), avrg iterations $(average_iters / iter), mean diff $(average_m / iter), covariance diff $(average_c / iter)")
 end
 
+function test_muta_lat()
 
+    X, y = load("data/mutagenesis.json")
+
+    lr = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    margin = [0.1, 0.5, 1.0, 2.0, 5.0]
+    norm = [0.1, 1.0, 2.0, 5.0, 10.0]
+    c1 = []
+    pi = []
+
+    for _λ in lr
+        for _α in margin
+            for _h in norm
+
+                average_ri = 0.0
+                average_iters = 0.0
+                for _ in 1:10
+                    _, _, y_new, _, _, _, iters, π₁ = LAT_htd(Kmeanspp(), X, 2; h=_h, λ=_λ, α=_α);
+                    c = sum([1 for i in 1:188 if y_new[i] == 1])
+                    push!(c1, c)
+                    push!(pi, π₁)
+                    ri = randindex(vec(y), vec(y_new))[2]
+                    average_ri = average_ri + ri
+                    average_iters = average_iters + iters
+                end
+                println("SETUP: lr=$_λ, RI=$(average_ri / 10), iters=$(average_iters / 10)")
+            end
+        end
+    end
+
+    return c1, pi
+end
